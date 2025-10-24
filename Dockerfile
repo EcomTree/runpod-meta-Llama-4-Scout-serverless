@@ -1,0 +1,76 @@
+# Multi-stage Dockerfile for Llama-4-Scout-17B-16E-Instruct RunPod Serverless
+# Optimized for size, security, and cold-start performance
+
+# Stage 1: Base image with system dependencies
+FROM pytorch/pytorch:2.1.2-cuda12.1-cudnn8-runtime AS base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Upgrade pip and install build dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Stage 2: Dependencies installation
+FROM base AS dependencies
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better layer caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Stage 3: Runtime image
+FROM dependencies AS runtime
+
+# Create non-root user for security
+RUN useradd -m -u 1000 -s /bin/bash runpod && \
+    chown -R runpod:runpod /app
+
+# Set working directory
+WORKDIR /app
+
+# Copy application code
+COPY --chown=runpod:runpod src/ ./src/
+
+# Create cache directory with proper permissions
+RUN mkdir -p /root/.cache/huggingface && \
+    chown -R runpod:runpod /root/.cache
+
+# Set environment variables for runtime
+ENV PYTHONPATH=/app \
+    HF_HOME=/root/.cache/huggingface \
+    TRANSFORMERS_CACHE=/root/.cache/huggingface \
+    HF_DATASETS_CACHE=/root/.cache/huggingface/datasets \
+    TORCH_HOME=/root/.cache/torch \
+    LOG_LEVEL=INFO \
+    LOG_FORMAT=json
+
+# Expose health check port
+EXPOSE 8000
+
+# Health check configuration
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Switch to non-root user
+USER runpod
+
+# Set entrypoint to start script
+CMD ["python", "-u", "src/start.py"]
+
