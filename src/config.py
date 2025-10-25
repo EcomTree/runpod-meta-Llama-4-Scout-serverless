@@ -193,7 +193,7 @@ def validate_config() -> Tuple[bool, List[str]]:
     
     # Validate numeric ranges
     if not 0.0 < inference_config.temperature <= 2.0:
-        errors.append(f"Temperature must be between 0.0 and 2.0, got {inference_config.temperature}")
+        errors.append(f"Temperature must be greater than 0.0 and at most 2.0, got {inference_config.temperature}")
     
     if not 0.0 <= inference_config.top_p <= 1.0:
         errors.append(f"top_p must be between 0.0 and 1.0, got {inference_config.top_p}")

@@ -44,6 +44,7 @@ def main():
     logger.info("Configuration summary:")
     for key, value in config_summary.items():
         logger.info(f"  {key}: {value}")
+    # The daemon=True flag means the health server thread will be terminated when the main
     # thread exits, even if it is currently handling a health check request. This can
     # result in a health check request being interrupted mid-response. However, this is
     # acceptable because:
@@ -51,9 +52,6 @@ def main():
     # 2. Health check requests are quick and don't maintain long-lived state.
     # 3. RunPod handles graceful shutdowns at the platform level.
     # 4. The main handler is the critical path; health server is auxiliary.
-    # 1. Health check requests are quick and don't maintain long-lived state
-    # 2. RunPod handles graceful shutdowns at the platform level
-    # 3. The main handler is the critical path; health server is auxiliary
     # The health server runs uvicorn.Server which blocks, but since it's in a daemon
     # thread, it won't prevent the main thread from starting the RunPod handler.
     health_thread = threading.Thread(target=start_health_server_thread, daemon=True)

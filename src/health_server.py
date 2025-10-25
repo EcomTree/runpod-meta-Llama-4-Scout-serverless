@@ -155,9 +155,14 @@ async def metrics_endpoint() -> Dict[str, Any]:
             metrics["gpu_memory_allocated_gb"] = round(gpu_info.get("allocated_gb", 0), 2)
             metrics["gpu_memory_free_gb"] = round(gpu_info.get("free_gb", 0), 2)
             metrics["gpu_memory_total_gb"] = round(gpu_info.get("total_gb", 0), 2)
-            metrics["gpu_memory_utilization_percent"] = round(
-                (gpu_info.get("allocated_gb", 0) / gpu_info.get("total_gb", 1)) * 100, 2
-            )
+            # Calculate utilization percentage, handle division by zero
+            total_gb = gpu_info.get("total_gb", 0)
+            if total_gb > 0:
+                metrics["gpu_memory_utilization_percent"] = round(
+                    (gpu_info.get("allocated_gb", 0) / total_gb) * 100, 2
+                )
+            else:
+                metrics["gpu_memory_utilization_percent"] = 0
         
         return metrics
         
@@ -218,6 +223,8 @@ def start_health_server():
     
     # Configure uvicorn without signal handlers to allow running in a thread
     # This prevents "ValueError: signal only works in main thread" error
+    # Note: Tested with uvicorn>=0.25.0 - if this fails in future versions,
+    # check uvicorn changelog for changes to signal handler API
     config = uvicorn.Config(
         app,
         host=server_config.host,
@@ -229,8 +236,8 @@ def start_health_server():
     server = uvicorn.Server(config)
     
     # Disable signal handler installation (only works in main thread)
-    # Note: Disabling via method assignment since uvicorn doesn't provide
-    # a documented API for thread-safe server execution without signals
+    # Using method assignment as uvicorn doesn't provide a Config parameter for this.
+    # This is a known workaround in the uvicorn community for thread-safe execution.
     server.install_signal_handlers = lambda: None
     
     # Run the server - asyncio.run() creates its own event loop
