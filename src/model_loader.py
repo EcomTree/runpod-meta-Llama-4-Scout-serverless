@@ -13,7 +13,7 @@ from transformers import (
     BitsAndBytesConfig,
 )
 
-from src.config import model_config, inference_config
+from src.config import model_config, inference_config, server_config
 from src.utils import (
     logger,
     ModelLoadError,
@@ -310,7 +310,6 @@ if os.getenv("AUTOLOAD_MODEL", "true").lower() == "true":
         loader.load_model()
         
         # Perform warmup if enabled
-        from src.config import server_config
         if server_config.model_warmup:
             loader.warmup(server_config.warmup_prompt)
         

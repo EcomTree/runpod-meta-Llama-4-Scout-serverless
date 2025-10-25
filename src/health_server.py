@@ -172,11 +172,15 @@ def start_health_server():
         f"Starting health check server on {server_config.host}:{server_config.port}"
     )
     
+    # Convert log level to string for uvicorn (expects lowercase string like "info")
+    from src.config import log_config
+    log_level_str = log_config.level.lower()
+    
     uvicorn.run(
         app,
         host=server_config.host,
         port=server_config.port,
-        log_level=logger.level,
+        log_level=log_level_str,
         access_log=False,  # Reduce noise
     )
 

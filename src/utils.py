@@ -7,6 +7,7 @@ import json
 import sys
 import time
 import traceback
+import uuid
 from typing import Any, Dict, Optional
 from datetime import datetime
 from functools import wraps
@@ -122,20 +123,21 @@ logger = setup_logging()
 def generate_request_id() -> str:
     """
     Generate a unique request ID for tracking.
+    Uses UUID4 for guaranteed uniqueness across distributed systems.
     
     Returns:
         str: Unique request identifier
     """
-    return f"req_{int(time.time() * 1000)}_{id(object())}"
+    return f"req_{uuid.uuid4().hex[:16]}"
 
 
-def sanitize_input(text: str, max_length: int = 100000) -> str:
+def sanitize_input(text: str, max_length: Optional[int] = None) -> str:
     """
     Sanitize user input text.
     
     Args:
         text: Input text to sanitize
-        max_length: Maximum allowed length
+        max_length: Maximum allowed length (defaults to config-based value)
         
     Returns:
         str: Sanitized text
@@ -148,6 +150,12 @@ def sanitize_input(text: str, max_length: int = 100000) -> str:
     
     if len(text) == 0:
         raise ValidationError("Input text cannot be empty")
+    
+    # Use config-based max length if not provided
+    if max_length is None:
+        from src.config import inference_config
+        # Approximate: 4 characters per token as a reasonable estimate
+        max_length = inference_config.max_input_tokens * 4
     
     if len(text) > max_length:
         raise ValidationError(f"Input text exceeds maximum length of {max_length} characters")
