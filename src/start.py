@@ -14,7 +14,9 @@ def start_health_server_thread():
         from src.health_server import start_health_server
         logger.info("Starting health check server in background thread...")
         start_health_server()
-    except (RuntimeError, OSError) as e:
+    except Exception as e:
+        # Catch all exceptions since start_health_server() can raise many types
+        # (ValueError, TypeError, ConfigError, RuntimeError, OSError, etc.)
         logger.exception(f"Health server failed: {e!s}")
 
 
