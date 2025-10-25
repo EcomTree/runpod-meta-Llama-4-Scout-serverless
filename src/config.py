@@ -4,7 +4,7 @@ Handles all environment variables and configuration settings.
 """
 
 import os
-from typing import Optional
+from typing import Optional, Tuple, List
 from dataclasses import dataclass
 
 
@@ -111,12 +111,12 @@ log_config = LogConfig()
 runpod_config = RunPodConfig()
 
 
-def validate_config() -> tuple[bool, list[str]]:
+def validate_config() -> Tuple[bool, List[str]]:
     """
     Validate configuration and return status with any error messages.
     
     Returns:
-        tuple: (is_valid, error_messages)
+        Tuple: (is_valid, error_messages)
     """
     errors = []
     

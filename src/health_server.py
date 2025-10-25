@@ -8,7 +8,7 @@ from fastapi import FastAPI, Response, status
 import uvicorn
 
 from src.model_loader import ModelLoader
-from src.config import server_config
+from src.config import server_config, log_config
 from src.utils import logger, get_gpu_memory_info
 
 
@@ -166,41 +166,45 @@ async def metrics_endpoint() -> Dict[str, Any]:
         return {"error": str(e)}
 
 
+def convert_log_level(level):
+    """
+    Convert log level to a string suitable for Uvicorn.
+    Accepts int, str (digit), or str (name).
+    
+    Args:
+        level: Log level as int (10, 20, 30, 40, 50) or str ("debug", "info", etc.)
+        
+    Returns:
+        str: Lowercase log level string suitable for Uvicorn
+    """
+    # Map known log levels to Uvicorn log level strings
+    uvicorn_levels = {
+        10: "debug",
+        20: "info",
+        30: "warning",
+        40: "error",
+        50: "critical",
+        "debug": "debug",
+        "info": "info",
+        "warning": "warning",
+        "error": "error",
+        "critical": "critical",
+    }
+    
+    if isinstance(level, str):
+        if level.isdigit():
+            level = int(level)
+        else:
+            level = level.lower()
+    
+    return uvicorn_levels.get(level, "info")
+
+
 def start_health_server():
     """Start the health check server."""
     logger.info(
         f"Starting health check server on {server_config.host}:{server_config.port}"
     )
-    
-    # Convert log level to string for uvicorn (expects lowercase string like "info")
-    from src.config import log_config
-    
-    def convert_log_level(level):
-        """
-        Convert log level to a string suitable for Uvicorn.
-        Accepts int, str (digit), or str (name).
-        """
-        # Map known log levels to Uvicorn log level strings
-        uvicorn_levels = {
-            10: "debug",
-            20: "info",
-            30: "warning",
-            40: "error",
-            50: "critical",
-            "debug": "debug",
-            "info": "info",
-            "warning": "warning",
-            "error": "error",
-            "critical": "critical",
-        }
-        
-        if isinstance(level, str):
-            if level.isdigit():
-                level = int(level)
-            else:
-                level = level.lower()
-        
-        return uvicorn_levels.get(level, "info")
     
     log_level_str = convert_log_level(log_config.level)
     
