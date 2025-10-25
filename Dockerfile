@@ -65,9 +65,9 @@ ENV PYTHONPATH=/app \
 # Expose health check port
 EXPOSE 8000
 
-# Health check configuration
+# Health check configuration (Python-based, no external dependencies)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD python3 -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=5).getcode() == 200 else 1)"
 
 # Switch to non-root user
 USER runpod
