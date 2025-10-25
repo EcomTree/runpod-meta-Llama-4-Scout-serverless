@@ -5,6 +5,7 @@ Handles model initialization, authentication, and GPU optimization.
 
 import os
 import time
+import threading
 from typing import Optional, Tuple
 import torch
 from transformers import (
@@ -26,6 +27,7 @@ class ModelLoader:
     """
     Singleton class for loading and managing the Llama model.
     Ensures model is loaded only once per container lifecycle.
+    Thread-safe model loading with double-checked locking pattern.
     """
     
     _instance: Optional['ModelLoader'] = None
@@ -34,6 +36,7 @@ class ModelLoader:
     _model_loaded = False
     _load_start_time: Optional[float] = None
     _load_end_time: Optional[float] = None
+    _load_lock: threading.Lock = threading.Lock()
     
     def __new__(cls):
         """Implement singleton pattern."""
@@ -78,6 +81,7 @@ class ModelLoader:
         """
         Load the model and tokenizer with all optimizations.
         This should be called once at container startup.
+        Thread-safe using double-checked locking pattern.
         
         Returns:
             tuple: (model, tokenizer)
@@ -85,103 +89,117 @@ class ModelLoader:
         Raises:
             ModelLoadError: If model loading fails
         """
+        # First check without lock (fast path)
         if cls._model_loaded:
             logger.info("Model already loaded, returning existing instance")
             return cls._model, cls._tokenizer
         
-        logger.info(f"Starting model loading: {model_config.model_id}")
-        cls._load_start_time = time.time()
-        
-        try:
-            # Validate HF token
-            if not model_config.hf_token:
-                raise ModelLoadError("HF_TOKEN environment variable is required")
+        # Acquire lock for thread-safe loading
+        with cls._load_lock:
+            # Double-check after acquiring lock
+            if cls._model_loaded:
+                logger.info("Model already loaded (post-lock check), returning existing instance")
+                return cls._model, cls._tokenizer
             
-            # Log GPU info before loading
-            gpu_info = get_gpu_memory_info()
-            logger.info(f"GPU info before loading: {gpu_info}")
+            logger.info(f"Starting model loading: {model_config.model_id}")
+            cls._load_start_time = time.time()
             
-            # Check CUDA availability
-            if not torch.cuda.is_available():
-                raise ModelLoadError("CUDA is not available. GPU is required for this model.")
-            
-            logger.info(f"Using device: CUDA - {torch.cuda.get_device_name(0)}")
-            
-            # Determine torch dtype
-            torch_dtype = cls._get_torch_dtype()
-            logger.info(f"Using dtype: {torch_dtype}")
-            
-            # Configure quantization if requested
-            quantization_config = cls._get_quantization_config()
-            
-            # Load tokenizer
-            logger.info("Loading tokenizer...")
-            cls._tokenizer = AutoTokenizer.from_pretrained(
-                model_config.model_id,
-                token=model_config.hf_token,
-                cache_dir=model_config.cache_dir,
-                trust_remote_code=model_config.trust_remote_code,
-            )
-            
-            # Set padding token if not set
-            if cls._tokenizer.pad_token is None:
-                cls._tokenizer.pad_token = cls._tokenizer.eos_token
-            
-            logger.info("Tokenizer loaded successfully")
-            
-            # Prepare model loading kwargs
-            model_kwargs = {
-                "pretrained_model_name_or_path": model_config.model_id,
-                "token": model_config.hf_token,
-                "cache_dir": model_config.cache_dir,
-                "device_map": model_config.device_map,
-                "trust_remote_code": model_config.trust_remote_code,
-                "low_cpu_mem_usage": True,
-            }
-            
-            # Add dtype if not using quantization
-            if quantization_config is None:
-                model_kwargs["torch_dtype"] = torch_dtype
-            else:
-                model_kwargs["quantization_config"] = quantization_config
-            
-            # Add Flash Attention 2 if available and enabled
-            if model_config.use_flash_attention and cls._check_flash_attention_available():
-                logger.info("Enabling Flash Attention 2")
-                model_kwargs["attn_implementation"] = "flash_attention_2"
-            
-            # Load model
-            logger.info("Loading model... This may take several minutes.")
-            cls._model = AutoModelForCausalLM.from_pretrained(**model_kwargs)
-            
-            # Set to evaluation mode
-            cls._model.eval()
-            
-            cls._load_end_time = time.time()
-            load_time = cls.get_load_time()
-            
-            # Log GPU info after loading
-            gpu_info_after = get_gpu_memory_info()
-            logger.info(f"GPU info after loading: {gpu_info_after}")
-            
-            cls._model_loaded = True
-            
-            logger.info(
-                f"Model loaded successfully in {load_time:.2f} seconds. "
-                f"GPU memory used: {gpu_info_after.get('allocated_gb', 0):.2f} GB"
-            )
-            
-            return cls._model, cls._tokenizer
-            
-        except Exception as e:
-            cls._load_end_time = time.time()
-            logger.exception("Failed to load model")
-            
-            # Log GPU info on failure
-            gpu_info = get_gpu_memory_info()
-            logger.error(f"GPU info at failure: {gpu_info}")
-            
-            raise ModelLoadError(f"Model loading failed: {e!s}") from e
+            try:
+                # Validate HF token
+                if not model_config.hf_token:
+                    raise ModelLoadError("HF_TOKEN environment variable is required")
+                
+                # Log GPU info before loading
+                gpu_info = get_gpu_memory_info()
+                logger.info(f"GPU info before loading: {gpu_info}")
+                
+                # Check CUDA availability
+                if not torch.cuda.is_available():
+                    raise ModelLoadError("CUDA is not available. GPU is required for this model.")
+                
+                logger.info(f"Using device: CUDA - {torch.cuda.get_device_name(0)}")
+                
+                # Determine torch dtype
+                torch_dtype = cls._get_torch_dtype()
+                logger.info(f"Using dtype: {torch_dtype}")
+                
+                # Configure quantization if requested
+                quantization_config = cls._get_quantization_config()
+                
+                # Load tokenizer
+                logger.info("Loading tokenizer...")
+                cls._tokenizer = AutoTokenizer.from_pretrained(
+                    model_config.model_id,
+                    token=model_config.hf_token,
+                    cache_dir=model_config.cache_dir,
+                    trust_remote_code=model_config.trust_remote_code,
+                )
+                
+                # Set padding token if not set
+                if cls._tokenizer.pad_token is None:
+                    cls._tokenizer.pad_token = cls._tokenizer.eos_token
+                
+                logger.info("Tokenizer loaded successfully")
+                
+                # Prepare model loading kwargs
+                model_kwargs = {
+                    "pretrained_model_name_or_path": model_config.model_id,
+                    "token": model_config.hf_token,
+                    "cache_dir": model_config.cache_dir,
+                    "device_map": model_config.device_map,
+                    "trust_remote_code": model_config.trust_remote_code,
+                    "low_cpu_mem_usage": True,
+                }
+                
+                # Add dtype if not using quantization
+                if quantization_config is None:
+                    model_kwargs["torch_dtype"] = torch_dtype
+                else:
+                    model_kwargs["quantization_config"] = quantization_config
+                
+                # Add Flash Attention 2 if available and enabled
+                if model_config.use_flash_attention and cls._check_flash_attention_available():
+                    logger.info("Enabling Flash Attention 2")
+                    model_kwargs["attn_implementation"] = "flash_attention_2"
+                
+                # Load model
+                logger.info("Loading model... This may take several minutes.")
+                cls._model = AutoModelForCausalLM.from_pretrained(**model_kwargs)
+                
+                # Set to evaluation mode
+                cls._model.eval()
+                
+                # Ensure pad_token_id is set on model config to avoid generation warnings
+                if getattr(cls._model.config, "pad_token_id", None) is None:
+                    if cls._tokenizer.pad_token_id is not None:
+                        cls._model.config.pad_token_id = cls._tokenizer.pad_token_id
+                        logger.info(f"Set model pad_token_id to {cls._tokenizer.pad_token_id}")
+                
+                cls._load_end_time = time.time()
+                load_time = cls.get_load_time()
+                
+                # Log GPU info after loading
+                gpu_info_after = get_gpu_memory_info()
+                logger.info(f"GPU info after loading: {gpu_info_after}")
+                
+                cls._model_loaded = True
+                
+                logger.info(
+                    f"Model loaded successfully in {load_time:.2f} seconds. "
+                    f"GPU memory used: {gpu_info_after.get('allocated_gb', 0):.2f} GB"
+                )
+                
+                return cls._model, cls._tokenizer
+                
+            except Exception as e:
+                cls._load_end_time = time.time()
+                logger.exception("Failed to load model")
+                
+                # Log GPU info on failure
+                gpu_info = get_gpu_memory_info()
+                logger.error(f"GPU info at failure: {gpu_info}")
+                
+                raise ModelLoadError(f"Model loading failed: {e!s}") from e
     
     @staticmethod
     def _get_torch_dtype():

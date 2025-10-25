@@ -5,7 +5,7 @@ Main entry point for inference requests.
 
 import time
 import torch
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 from pydantic import BaseModel, Field, field_validator
 
 from src.model_loader import get_model_loader, ModelLoader
@@ -22,7 +22,7 @@ from src.utils import (
     InferenceError,
     ValidationError,
     GPUMemoryError,
-    TimeoutError as CustomTimeoutError,
+    OperationTimeoutError,
 )
 
 
@@ -104,7 +104,7 @@ def generate_text(
     top_k: int,
     repetition_penalty: float,
     do_sample: bool = True,
-) -> tuple[str, Dict[str, Any]]:
+) -> Tuple[str, Dict[str, Any]]:
     """
     Generate text using the loaded model.
     

@@ -176,8 +176,12 @@ docker push your-dockerhub-username/llama4-scout-runpod:latest
 Using cURL:
 
 ```bash
-curl -X POST https://api.runpod.ai/v2/YOUR-ENDPOINT-ID/runsync \
-  -H "Authorization: Bearer YOUR-RUNPOD-API-KEY" \
+# Set environment variables securely
+export RUNPOD_ENDPOINT_ID="your-endpoint-id"
+export RUNPOD_API_KEY="your-runpod-api-key"
+
+curl -X POST https://api.runpod.ai/v2/${RUNPOD_ENDPOINT_ID}/runsync \
+  -H "Authorization: Bearer ${RUNPOD_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
     "input": {
@@ -192,9 +196,14 @@ Using Python:
 
 ```python
 import requests
+import os
 
-endpoint_id = "YOUR-ENDPOINT-ID"
-api_key = "YOUR-RUNPOD-API-KEY"
+# Load credentials from environment variables
+endpoint_id = os.getenv("RUNPOD_ENDPOINT_ID")
+api_key = os.getenv("RUNPOD_API_KEY")
+
+if not endpoint_id or not api_key:
+    raise ValueError("RUNPOD_ENDPOINT_ID and RUNPOD_API_KEY environment variables must be set")
 
 response = requests.post(
     f"https://api.runpod.ai/v2/{endpoint_id}/runsync",

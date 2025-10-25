@@ -31,7 +31,7 @@ class ValidationError(Exception):
     pass
 
 
-class TimeoutError(Exception):
+class OperationTimeoutError(Exception):
     """Raised when operation times out."""
     pass
 
