@@ -6,10 +6,10 @@ Main entry point for inference requests.
 import time
 import torch
 from typing import Dict, Any, Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from src.model_loader import get_model_loader, ModelLoader
-from src.config import inference_config, log_config
+from src.config import inference_config, log_config, model_config
 from src.utils import (
     logger,
     generate_request_id,
@@ -65,7 +65,7 @@ class InferenceInput(BaseModel):
         description="Whether to use sampling"
     )
     
-    @validator("prompt")
+    @field_validator("prompt")
     def validate_prompt(cls, v):
         """Validate and sanitize prompt."""
         if not v or not v.strip():
@@ -93,7 +93,7 @@ def validate_input(input_data: Dict[str, Any]) -> InferenceInput:
     try:
         return InferenceInput(**input_data)
     except Exception as e:
-        raise ValidationError(f"Input validation failed: {str(e)}")
+        raise ValidationError(f"Input validation failed: {e!s}") from e
 
 
 def generate_text(
@@ -202,14 +202,14 @@ def generate_text(
         return generated_text, metrics
         
     except torch.cuda.OutOfMemoryError as e:
-        logger.error("GPU out of memory during generation", exc_info=True)
+        logger.exception("GPU out of memory during generation")
         clear_gpu_cache()
         raise GPUMemoryError("GPU out of memory. Try reducing max_new_tokens or input length.") from e
     
     except Exception as e:
-        logger.error(f"Generation failed: {str(e)}", exc_info=True)
+        logger.exception("Generation failed")
         clear_gpu_cache()
-        raise InferenceError(f"Text generation failed: {str(e)}") from e
+        raise InferenceError(f"Text generation failed: {e!s}") from e
 
 
 def handler(event: Dict[str, Any]) -> Dict[str, Any]:
@@ -242,11 +242,31 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
         validated_input = validate_input(input_data)
         
         # Apply defaults from config
-        max_new_tokens = validated_input.max_new_tokens or inference_config.max_new_tokens
-        temperature = validated_input.temperature or inference_config.temperature
-        top_p = validated_input.top_p or inference_config.top_p
-        top_k = validated_input.top_k or inference_config.top_k
-        repetition_penalty = validated_input.repetition_penalty or inference_config.repetition_penalty
+        max_new_tokens = (
+            validated_input.max_new_tokens
+            if validated_input.max_new_tokens is not None
+            else inference_config.max_new_tokens
+        )
+        temperature = (
+            validated_input.temperature
+            if validated_input.temperature is not None
+            else inference_config.temperature
+        )
+        top_p = (
+            validated_input.top_p
+            if validated_input.top_p is not None
+            else inference_config.top_p
+        )
+        top_k = (
+            validated_input.top_k
+            if validated_input.top_k is not None
+            else inference_config.top_k
+        )
+        repetition_penalty = (
+            validated_input.repetition_penalty
+            if validated_input.repetition_penalty is not None
+            else inference_config.repetition_penalty
+        )
         
         # Validate generation parameters
         validate_generation_params(
@@ -292,19 +312,19 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
         return response
         
     except ValidationError as e:
-        logger.warning(f"Validation error for request {request_id}: {str(e)}")
+        logger.warning(f"Validation error for request {request_id}: {e!s}")
         return format_error_response(e, request_id, include_traceback=False)
     
     except GPUMemoryError as e:
-        logger.error(f"GPU memory error for request {request_id}: {str(e)}")
+        logger.error(f"GPU memory error for request {request_id}: {e!s}")
         return format_error_response(e, request_id, include_traceback=False)
     
     except InferenceError as e:
-        logger.error(f"Inference error for request {request_id}: {str(e)}")
+        logger.error(f"Inference error for request {request_id}: {e!s}")
         return format_error_response(e, request_id, include_traceback=False)
     
     except Exception as e:
-        logger.error(f"Unexpected error for request {request_id}: {str(e)}", exc_info=True)
+        logger.exception(f"Unexpected error for request {request_id}")
         return format_error_response(e, request_id, include_traceback=True)
 
 
@@ -322,7 +342,7 @@ def health_check() -> Dict[str, Any]:
         status = {
             "status": "healthy" if ModelLoader.is_loaded() else "initializing",
             "model_loaded": ModelLoader.is_loaded(),
-            "model_id": str(inference_config.max_new_tokens),  # Safe to expose
+            "model_id": model_config.model_id,  # Safe to expose
         }
         
         if ModelLoader.is_loaded():
@@ -342,7 +362,7 @@ def health_check() -> Dict[str, Any]:
         return status
         
     except Exception as e:
-        logger.error(f"Health check failed: {str(e)}", exc_info=True)
+        logger.exception("Health check failed")
         return {
             "status": "unhealthy",
             "error": str(e),

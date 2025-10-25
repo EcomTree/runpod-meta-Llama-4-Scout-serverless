@@ -3,10 +3,8 @@ FastAPI health check server for container health monitoring.
 Runs alongside the RunPod handler to provide health status.
 """
 
-import asyncio
 from typing import Dict, Any
 from fastapi import FastAPI, Response, status
-from fastapi.responses import JSONResponse
 import uvicorn
 
 from src.model_loader import ModelLoader
@@ -86,7 +84,7 @@ async def health_check(response: Response) -> Dict[str, Any]:
         return health_data
         
     except Exception as e:
-        logger.error(f"Health check failed: {str(e)}", exc_info=True)
+        logger.exception("Health check failed")
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {
             "status": "unhealthy",
@@ -164,7 +162,7 @@ async def metrics_endpoint() -> Dict[str, Any]:
         return metrics
         
     except Exception as e:
-        logger.error(f"Metrics endpoint failed: {str(e)}", exc_info=True)
+        logger.exception("Metrics endpoint failed")
         return {"error": str(e)}
 
 

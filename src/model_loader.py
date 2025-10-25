@@ -175,13 +175,13 @@ class ModelLoader:
             
         except Exception as e:
             cls._load_end_time = time.time()
-            logger.error(f"Failed to load model: {str(e)}", exc_info=True)
+            logger.exception("Failed to load model")
             
             # Log GPU info on failure
             gpu_info = get_gpu_memory_info()
             logger.error(f"GPU info at failure: {gpu_info}")
             
-            raise ModelLoadError(f"Model loading failed: {str(e)}") from e
+            raise ModelLoadError(f"Model loading failed: {e!s}") from e
     
     @staticmethod
     def _get_torch_dtype():
@@ -271,7 +271,7 @@ class ModelLoader:
             ).to(cls._model.device)
             
             with torch.no_grad():
-                outputs = cls._model.generate(
+                cls._model.generate(
                     **inputs,
                     max_new_tokens=10,
                     temperature=0.7,
@@ -286,8 +286,8 @@ class ModelLoader:
             
             return True
             
-        except Exception as e:
-            logger.error(f"Warmup failed: {str(e)}", exc_info=True)
+        except Exception:
+            logger.exception("Warmup failed")
             return False
 
 
@@ -315,7 +315,7 @@ if os.getenv("AUTOLOAD_MODEL", "true").lower() == "true":
             loader.warmup(server_config.warmup_prompt)
         
         logger.info("Model initialization complete and ready for inference")
-    except Exception as e:
-        logger.error(f"Failed to auto-load model: {str(e)}", exc_info=True)
+    except Exception:
+        logger.exception("Failed to auto-load model")
         # Don't raise here - let the handler deal with it
 

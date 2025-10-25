@@ -48,16 +48,17 @@ WORKDIR /app
 # Copy application code
 COPY --chown=runpod:runpod src/ ./src/
 
-# Create cache directory with proper permissions
-RUN mkdir -p /root/.cache/huggingface && \
-    chown -R runpod:runpod /root/.cache
+# Create cache directory in user's home with proper permissions
+RUN mkdir -p /home/runpod/.cache/huggingface && \
+    mkdir -p /home/runpod/.cache/torch && \
+    chown -R runpod:runpod /home/runpod/.cache
 
 # Set environment variables for runtime
 ENV PYTHONPATH=/app \
-    HF_HOME=/root/.cache/huggingface \
-    TRANSFORMERS_CACHE=/root/.cache/huggingface \
-    HF_DATASETS_CACHE=/root/.cache/huggingface/datasets \
-    TORCH_HOME=/root/.cache/torch \
+    HF_HOME=/home/runpod/.cache/huggingface \
+    TRANSFORMERS_CACHE=/home/runpod/.cache/huggingface \
+    HF_DATASETS_CACHE=/home/runpod/.cache/huggingface/datasets \
+    TORCH_HOME=/home/runpod/.cache/torch \
     LOG_LEVEL=INFO \
     LOG_FORMAT=json
 

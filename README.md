@@ -22,7 +22,7 @@ Production-ready serverless deployment solution for the **meta-llama/Llama-4-Sco
 
 ## 🏗️ Project Structure
 
-```
+```text
 .
 ├── src/
 │   ├── __init__.py           # Package initialization
@@ -152,7 +152,7 @@ docker push your-dockerhub-username/llama4-scout-runpod:latest
    - **Volume Disk**: 50GB recommended (for model caching)
 
 4. **Environment Variables**:
-   ```
+   ```env
    HF_TOKEN=your_hugging_face_token
    MODEL_ID=meta-llama/Llama-4-Scout-17B-16E-Instruct
    TORCH_DTYPE=bfloat16

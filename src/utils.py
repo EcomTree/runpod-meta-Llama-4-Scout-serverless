@@ -267,9 +267,9 @@ def timing_decorator(func):
             elapsed_ms = (time.time() - start_time) * 1000
             logger.debug(f"{func.__name__} completed in {elapsed_ms:.2f}ms")
             return result
-        except Exception as e:
+        except Exception:
             elapsed_ms = (time.time() - start_time) * 1000
-            logger.error(f"{func.__name__} failed after {elapsed_ms:.2f}ms: {str(e)}")
+            logger.exception(f"{func.__name__} failed after {elapsed_ms:.2f}ms")
             raise
     
     return wrapper
@@ -338,7 +338,7 @@ def get_gpu_memory_info() -> Dict[str, Any]:
             "free_gb": (total_memory - allocated_memory) / (1024**3),
         }
     except Exception as e:
-        logger.warning(f"Failed to get GPU memory info: {str(e)}")
+        logger.warning(f"Failed to get GPU memory info: {e!s}")
         return {"available": False, "error": str(e)}
 
 
@@ -350,5 +350,5 @@ def clear_gpu_cache():
             torch.cuda.empty_cache()
             logger.debug("GPU cache cleared")
     except Exception as e:
-        logger.warning(f"Failed to clear GPU cache: {str(e)}")
+        logger.warning(f"Failed to clear GPU cache: {e!s}")
 

@@ -1,25 +1,25 @@
 # Core ML/AI dependencies
-torch==2.1.2
-transformers==4.36.2
-accelerate==0.25.0
-huggingface-hub==0.20.2
+torch>=2.6.0
+transformers>=4.50.0
+accelerate>=0.25.0
+huggingface-hub>=0.20.2
 
 # Quantization support (optional but recommended for memory optimization)
-bitsandbytes==0.41.3
-scipy==1.11.4
+bitsandbytes>=0.41.3
+scipy>=1.11.4
 
 # Flash Attention 2 (optional, for performance boost)
 # Uncomment if you want to use Flash Attention 2
 # flash-attn==2.4.2
 
 # RunPod SDK
-runpod==1.6.2
+runpod>=1.6.2
 
 # Web server for health checks
-fastapi==0.108.0
-uvicorn[standard]==0.25.0
-pydantic==2.5.3
+fastapi>=0.109.1
+uvicorn[standard]>=0.25.0
+pydantic>=2.5.3
 
 # Utilities
-python-dotenv==1.0.0
+python-dotenv>=1.0.0
 

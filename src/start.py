@@ -2,7 +2,6 @@
 Startup script that runs both the health check server and RunPod handler.
 """
 
-import os
 import sys
 import threading
 from src.utils import logger
@@ -15,8 +14,8 @@ def start_health_server_thread():
         from src.health_server import start_health_server
         logger.info("Starting health check server in background thread...")
         start_health_server()
-    except Exception as e:
-        logger.error(f"Health server failed: {str(e)}", exc_info=True)
+    except (RuntimeError, OSError) as e:
+        logger.exception(f"Health server failed: {e!s}")
 
 
 def main():
@@ -59,10 +58,10 @@ def main():
         
     except ImportError as e:
         logger.error("Failed to import runpod. Is runpod package installed?")
-        logger.error(f"Error: {str(e)}")
+        logger.error(f"Error: {e!s}")
         sys.exit(1)
-    except Exception as e:
-        logger.error(f"Failed to start RunPod handler: {str(e)}", exc_info=True)
+    except (RuntimeError, OSError) as e:
+        logger.exception(f"Failed to start RunPod handler: {e!s}")
         sys.exit(1)
 
 
