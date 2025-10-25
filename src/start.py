@@ -44,10 +44,13 @@ def main():
     logger.info("Configuration summary:")
     for key, value in config_summary.items():
         logger.info(f"  {key}: {value}")
-    
-    # Start health check server in background thread
-    # Note: daemon=True means this thread will be forcibly terminated when the main
-    # thread exits. This is acceptable for the health server because:
+    # thread exits, even if it is currently handling a health check request. This can
+    # result in a health check request being interrupted mid-response. However, this is
+    # acceptable because:
+    # 1. Health checks are stateless and idempotent, so interrupted requests can be retried safely.
+    # 2. Health check requests are quick and don't maintain long-lived state.
+    # 3. RunPod handles graceful shutdowns at the platform level.
+    # 4. The main handler is the critical path; health server is auxiliary.
     # 1. Health check requests are quick and don't maintain long-lived state
     # 2. RunPod handles graceful shutdowns at the platform level
     # 3. The main handler is the critical path; health server is auxiliary
