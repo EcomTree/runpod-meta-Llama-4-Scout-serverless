@@ -174,22 +174,30 @@ def start_health_server():
     
     # Convert log level to string for uvicorn (expects lowercase string like "info")
     from src.config import log_config
-    import logging
     
-    # Normalize log level for Uvicorn: expects lowercase string like "info"
-    if isinstance(log_config.level, str):
-        if log_config.level.isdigit():
-            level_name = logging.getLevelName(int(log_config.level))
+    # Map known log levels to Uvicorn log level strings
+    uvicorn_levels = {
+        10: "debug",
+        20: "info",
+        30: "warning",
+        40: "error",
+        50: "critical",
+        "debug": "debug",
+        "info": "info",
+        "warning": "warning",
+        "error": "error",
+        "critical": "critical",
+    }
+    
+    level = log_config.level
+    # Convert string digits to int
+    if isinstance(level, str):
+        if level.isdigit():
+            level = int(level)
         else:
-            level_name = log_config.level
-    else:
-        level_name = logging.getLevelName(log_config.level)
-
-    # Uvicorn expects lowercase log level names ("info", "debug", etc.)
-    log_level_str = str(level_name).lower()
-    # Fallback to "info" if the result is not a valid Uvicorn log level
-    if log_level_str not in {"debug", "info", "warning", "error", "critical"}:
-        log_level_str = "info"
+            level = level.lower()
+    
+    log_level_str = uvicorn_levels.get(level, "info")
     
     uvicorn.run(
         app,

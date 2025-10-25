@@ -62,7 +62,9 @@ def main():
         logger.error("Failed to import runpod. Is runpod package installed?")
         logger.error(f"Error: {e!s}")
         sys.exit(1)
-    except (RuntimeError, OSError) as e:
+    except Exception as e:
+        # Catch all exceptions since runpod.serverless.start() can raise many types
+        # (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError, etc.)
         logger.exception(f"Failed to start RunPod handler: {e!s}")
         sys.exit(1)
 

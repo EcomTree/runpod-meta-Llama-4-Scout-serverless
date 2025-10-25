@@ -70,7 +70,11 @@ class InferenceInput(BaseModel):
         """Validate and sanitize prompt."""
         if not v or not v.strip():
             raise ValueError("Prompt cannot be empty")
-        return sanitize_input(v, max_length=inference_config.max_input_tokens * 4)
+        try:
+            return sanitize_input(v, max_length=inference_config.max_input_tokens * 4)
+        except ValidationError as e:
+            # Pydantic expects ValueError for validation failures
+            raise ValueError(str(e)) from e
     
     class Config:
         """Pydantic config."""
