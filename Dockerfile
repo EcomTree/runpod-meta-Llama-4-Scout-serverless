@@ -68,7 +68,7 @@ EXPOSE 8000
 
 # Health check configuration (Python-based, no external dependencies)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
-    CMD python3 -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=5).getcode() == 200 else 1)"
+    CMD python3 /app/scripts/healthcheck.py
 
 # Switch to non-root user
 USER runpod
