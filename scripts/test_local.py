@@ -202,8 +202,13 @@ def main():
     # Check for HF_TOKEN
     if not os.getenv("HF_TOKEN"):
         print("ERROR: HF_TOKEN environment variable not set!")
-        print("Please set your Hugging Face token:")
-        print("  export HF_TOKEN='your_token_here'")
+        print("Please set your Hugging Face token securely:")
+        print("  Option 1: Load from file (recommended)")
+        print("    export HF_TOKEN=$(cat ~/.hf_token)")
+        print("  Option 2: Use environment file")
+        print("    export HF_TOKEN=$(grep HF_TOKEN .env | cut -d '=' -f2)")
+        print("  Option 3: Direct export (will be visible in shell history)")
+        print("    export HF_TOKEN='your_token_here'")
         sys.exit(1)
     
     try:

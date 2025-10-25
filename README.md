@@ -54,6 +54,12 @@ git clone https://github.com/EcomTree/runpod-meta-Llama-4-Scout-serverless.git
 cd runpod-meta-Llama-4-Scout-serverless
 
 # Set your Hugging Face token
+# ⚠️ Security tip: To avoid saving your token in shell history:
+#   Option 1: Load from secure file (recommended)
+#     export HF_TOKEN=$(cat ~/.hf_token)
+#   Option 2: Use 'read -s' for secure input
+#     read -s HF_TOKEN && export HF_TOKEN
+#   Option 3: Prefix with space (bash with HISTCONTROL=ignorespace)
 export HF_TOKEN="your_hf_token_here"
 
 # Optional: Create virtual environment
