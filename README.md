@@ -50,6 +50,7 @@ Production-ready serverless deployment solution for the **meta-llama/Llama-4-Sco
 
 ```bash
 # Clone the repository
+git clone https://github.com/EcomTree/runpod-meta-Llama-4-Scout-serverless.git
 cd runpod-meta-Llama-4-Scout-serverless
 
 # Set your Hugging Face token
