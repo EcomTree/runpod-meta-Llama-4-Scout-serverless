@@ -57,7 +57,7 @@ services:
     
     # Health check
     healthcheck:
-      test: ["CMD", "python3", "-c", "import sys, urllib.request; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/health').getcode() == 200 else sys.exit(1)"]
+      test: ["CMD", "python3", "/app/scripts/healthcheck.py"]
       interval: 30s
       timeout: 10s
       retries: 3

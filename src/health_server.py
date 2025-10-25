@@ -201,20 +201,36 @@ def convert_log_level(level):
 
 
 def start_health_server():
-    """Start the health check server."""
+    """
+    Start the health check server.
+    Safe to call from a non-main thread by avoiding signal handler installation.
+    """
+    import asyncio
+    
     logger.info(
         f"Starting health check server on {server_config.host}:{server_config.port}"
     )
     
     log_level_str = convert_log_level(log_config.level)
     
-    uvicorn.run(
+    # Configure uvicorn without signal handlers to allow running in a thread
+    # This prevents "ValueError: signal only works in main thread" error
+    config = uvicorn.Config(
         app,
         host=server_config.host,
         port=server_config.port,
         log_level=log_level_str,
         access_log=False,  # Reduce noise
+        loop="asyncio",
     )
+    server = uvicorn.Server(config)
+    
+    # Disable signal handler installation (only works in main thread)
+    config.setup_event_loop()
+    server.install_signal_handlers = lambda: None
+    
+    # Run the server using asyncio
+    asyncio.run(server.serve())
 
 
 # Entry point for running as standalone

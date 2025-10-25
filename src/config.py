@@ -4,8 +4,51 @@ Handles all environment variables and configuration settings.
 """
 
 import os
+import sys
 from typing import Optional, Tuple, List
 from dataclasses import dataclass
+
+
+def _get_int_env(key: str, default: int) -> int:
+    """
+    Safely get an integer from environment variable with error handling.
+    
+    Args:
+        key: Environment variable name
+        default: Default value if not set or invalid
+        
+    Returns:
+        int: Parsed integer value or default
+    """
+    value = os.getenv(key)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except (ValueError, TypeError) as e:
+        print(f"Warning: Invalid integer value for {key}='{value}', using default {default}: {e}", file=sys.stderr)
+        return default
+
+
+def _get_float_env(key: str, default: float) -> float:
+    """
+    Safely get a float from environment variable with error handling.
+    
+    Args:
+        key: Environment variable name
+        default: Default value if not set or invalid
+        
+    Returns:
+        float: Parsed float value or default
+    """
+    value = os.getenv(key)
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (ValueError, TypeError) as e:
+        print(f"Warning: Invalid float value for {key}='{value}', using default {default}: {e}", file=sys.stderr)
+        return default
 
 
 @dataclass
@@ -46,22 +89,22 @@ class ModelConfig:
 class InferenceConfig:
     """Default configuration for text generation."""
     
-    # Generation parameters
-    max_new_tokens: int = int(os.getenv("DEFAULT_MAX_NEW_TOKENS", "512"))
-    temperature: float = float(os.getenv("DEFAULT_TEMPERATURE", "0.7"))
-    top_p: float = float(os.getenv("DEFAULT_TOP_P", "0.9"))
-    top_k: int = int(os.getenv("DEFAULT_TOP_K", "50"))
-    repetition_penalty: float = float(os.getenv("DEFAULT_REPETITION_PENALTY", "1.1"))
+    # Generation parameters (with safe environment variable parsing)
+    max_new_tokens: int = _get_int_env("DEFAULT_MAX_NEW_TOKENS", 512)
+    temperature: float = _get_float_env("DEFAULT_TEMPERATURE", 0.7)
+    top_p: float = _get_float_env("DEFAULT_TOP_P", 0.9)
+    top_k: int = _get_int_env("DEFAULT_TOP_K", 50)
+    repetition_penalty: float = _get_float_env("DEFAULT_REPETITION_PENALTY", 1.1)
     
     # Limits
-    max_input_tokens: int = int(os.getenv("MAX_INPUT_TOKENS", "4096"))
-    max_total_tokens: int = int(os.getenv("MAX_TOTAL_TOKENS", "8192"))
+    max_input_tokens: int = _get_int_env("MAX_INPUT_TOKENS", 4096)
+    max_total_tokens: int = _get_int_env("MAX_TOTAL_TOKENS", 8192)
     
     # Character-to-token ratio estimate (approximate, varies by tokenizer and language)
     chars_per_token_estimate: int = 4
     
     # Timeout settings
-    inference_timeout_seconds: int = int(os.getenv("INFERENCE_TIMEOUT", "120"))
+    inference_timeout_seconds: int = _get_int_env("INFERENCE_TIMEOUT", 120)
     
     # Streaming
     enable_streaming: bool = os.getenv("ENABLE_STREAMING", "false").lower() == "true"
@@ -72,18 +115,38 @@ class ServerConfig:
     """Configuration for the FastAPI health check server."""
     
     host: str = os.getenv("HEALTH_CHECK_HOST", "0.0.0.0")
-    port: int = int(os.getenv("HEALTH_CHECK_PORT", "8000"))
+    port: int = _get_int_env("HEALTH_CHECK_PORT", 8000)
     
     # Health check settings
     model_warmup: bool = os.getenv("MODEL_WARMUP", "true").lower() == "true"
     warmup_prompt: str = "Hello, how are you?"
 
 
+def _normalize_log_level(level: str) -> str:
+    """
+    Normalize and validate log level at config initialization.
+    
+    Args:
+        level: Raw log level string from environment
+        
+    Returns:
+        str: Normalized log level (uppercase)
+    """
+    valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+    level_upper = level.upper()
+    
+    if level_upper not in valid_levels:
+        print(f"Warning: Invalid LOG_LEVEL='{level}', using default 'INFO'", file=sys.stderr)
+        return "INFO"
+    
+    return level_upper
+
+
 @dataclass
 class LogConfig:
     """Logging configuration."""
     
-    level: str = os.getenv("LOG_LEVEL", "INFO")
+    level: str = _normalize_log_level(os.getenv("LOG_LEVEL", "INFO"))
     format: str = os.getenv("LOG_FORMAT", "json")  # json or text
     
     # Performance logging
