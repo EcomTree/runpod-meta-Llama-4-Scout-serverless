@@ -43,7 +43,8 @@ def main():
         logger.info(f"  {key}: {value}")
     
     # Start health check server in background thread
-    health_thread = threading.Thread(target=start_health_server_thread, daemon=True)
+    # Note: daemon=False ensures the health server stays running during the full lifecycle
+    health_thread = threading.Thread(target=start_health_server_thread, daemon=False)
     health_thread.start()
     logger.info("Health check server thread started")
     

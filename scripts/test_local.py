@@ -1,6 +1,9 @@
 """
 Local testing script for the RunPod handler.
 Simulates RunPod request format and tests the handler locally.
+
+Run this script as a module for local testing:
+  python -m scripts.test_local
 """
 
 import os
@@ -8,9 +11,6 @@ import sys
 import json
 import argparse
 from typing import Dict, Any
-
-# Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
 def test_handler_simple():
