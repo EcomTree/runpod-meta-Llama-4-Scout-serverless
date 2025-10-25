@@ -39,7 +39,7 @@ class InferenceInput(BaseModel):
     )
     temperature: Optional[float] = Field(
         default=None,
-        ge=0.0,
+        gt=0.0,
         le=2.0,
         description="Sampling temperature"
     )
