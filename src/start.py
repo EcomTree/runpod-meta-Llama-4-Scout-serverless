@@ -17,9 +17,12 @@ def start_health_server_thread():
     except Exception as e:
         # Catch all exceptions since start_health_server() can raise many types
         # (ValueError, TypeError, ConfigError, RuntimeError, OSError, etc.)
-        logger.exception(f"Health server failed: {e!s}")
-
-
+        logger.error(
+            "Health server failed to start. Health monitoring is DISABLED for this process. "
+            "This is non-fatal and the main handler will continue running, but health checks will not be available. "
+            f"Exception: {e!s}"
+        )
+        logger.debug("Exception details:", exc_info=True)
 def main():
     """Main startup function."""
     logger.info("=" * 80)
