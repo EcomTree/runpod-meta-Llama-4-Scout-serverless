@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 from datetime import datetime
 from functools import wraps
 
-from src.config import log_config
+from src.config import log_config, inference_config
 
 
 # Custom Exceptions
@@ -153,7 +153,6 @@ def sanitize_input(text: str, max_length: Optional[int] = None) -> str:
     
     # Use config-based max length if not provided
     if max_length is None:
-        from src.config import inference_config
         # Approximate: 4 characters per token as a reasonable estimate
         max_length = inference_config.max_input_tokens * 4
     
