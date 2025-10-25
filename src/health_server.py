@@ -203,7 +203,10 @@ def convert_log_level(level):
 def start_health_server():
     """
     Start the health check server.
-    Safe to call from a non-main thread by avoiding signal handler installation.
+    Safe to call from a non-main thread by disabling signal handler installation.
+    
+    Note: This implementation uses uvicorn internal APIs (install_signal_handlers).
+    Tested with uvicorn>=0.25.0. May need adjustment if uvicorn internals change.
     """
     import asyncio
     
@@ -226,10 +229,11 @@ def start_health_server():
     server = uvicorn.Server(config)
     
     # Disable signal handler installation (only works in main thread)
-    config.setup_event_loop()
+    # Note: Disabling via method assignment since uvicorn doesn't provide
+    # a documented API for thread-safe server execution without signals
     server.install_signal_handlers = lambda: None
     
-    # Run the server using asyncio
+    # Run the server - asyncio.run() creates its own event loop
     asyncio.run(server.serve())
 
 

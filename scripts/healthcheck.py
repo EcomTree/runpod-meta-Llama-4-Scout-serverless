@@ -5,6 +5,7 @@ Checks if the health endpoint returns 200 OK.
 """
 
 import sys
+import socket
 import urllib.request
 import urllib.error
 
@@ -24,7 +25,13 @@ def check_health(host: str = "localhost", port: int = 8000) -> bool:
         url = f"http://{host}:{port}/health"
         response = urllib.request.urlopen(url, timeout=5)
         return response.getcode() == 200
-    except (urllib.error.URLError, urllib.error.HTTPError, OSError) as e:
+    except (
+        urllib.error.URLError,
+        urllib.error.HTTPError,
+        socket.timeout,
+        ConnectionRefusedError,
+        ConnectionResetError,
+    ) as e:
         print(f"Health check failed: {e}", file=sys.stderr)
         return False
 

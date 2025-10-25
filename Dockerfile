@@ -47,6 +47,7 @@ WORKDIR /app
 
 # Copy application code
 COPY --chown=runpod:runpod src/ ./src/
+COPY --chown=runpod:runpod scripts/ ./scripts/
 
 # Create cache directory in user's home with proper permissions
 RUN mkdir -p /home/runpod/.cache/huggingface && \

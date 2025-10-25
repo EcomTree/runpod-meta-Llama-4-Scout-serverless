@@ -161,6 +161,10 @@ def sanitize_input(text: str, max_length: Optional[int] = None) -> str:
     # Remove null bytes
     text = text.replace("\x00", "")
     
+    # Validate that text is not empty after sanitization
+    if len(text) == 0 or not text.strip():
+        raise ValidationError("Input text cannot be empty after sanitization")
+    
     return text
 
 

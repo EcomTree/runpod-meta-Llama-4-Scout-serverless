@@ -43,9 +43,13 @@ def main():
         logger.info(f"  {key}: {value}")
     
     # Start health check server in background thread
-    # Note: daemon=True allows the process to exit cleanly when the main thread finishes.
-    # The health server runs uvicorn.run() which blocks, but since it's in a separate thread,
-    # it won't block the main thread from starting the RunPod handler.
+    # Note: daemon=True means this thread will be forcibly terminated when the main
+    # thread exits. This is acceptable for the health server because:
+    # 1. Health check requests are quick and don't maintain long-lived state
+    # 2. RunPod handles graceful shutdowns at the platform level
+    # 3. The main handler is the critical path; health server is auxiliary
+    # The health server runs uvicorn.Server which blocks, but since it's in a daemon
+    # thread, it won't prevent the main thread from starting the RunPod handler.
     health_thread = threading.Thread(target=start_health_server_thread, daemon=True)
     health_thread.start()
     logger.info("Health check server thread started")
