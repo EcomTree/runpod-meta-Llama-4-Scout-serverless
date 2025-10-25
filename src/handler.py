@@ -71,7 +71,10 @@ class InferenceInput(BaseModel):
         if not v or not v.strip():
             raise ValueError("Prompt cannot be empty")
         try:
-            return sanitize_input(v, max_length=inference_config.max_input_tokens * 4)
+            return sanitize_input(
+                v, 
+                max_length=inference_config.max_input_tokens * inference_config.chars_per_token_estimate
+            )
         except ValidationError as e:
             # Pydantic expects ValueError for validation failures
             raise ValueError(str(e)) from e

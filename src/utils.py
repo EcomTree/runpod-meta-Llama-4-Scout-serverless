@@ -153,8 +153,7 @@ def sanitize_input(text: str, max_length: Optional[int] = None) -> str:
     
     # Use config-based max length if not provided
     if max_length is None:
-        # Approximate: 4 characters per token as a reasonable estimate
-        max_length = inference_config.max_input_tokens * 4
+        max_length = inference_config.max_input_tokens * inference_config.chars_per_token_estimate
     
     if len(text) > max_length:
         raise ValidationError(f"Input text exceeds maximum length of {max_length} characters")
@@ -302,8 +301,8 @@ def validate_generation_params(
     Raises:
         ValidationError: If any parameter is invalid
     """
-    if not 0.0 <= temperature <= 2.0:
-        raise ValidationError(f"temperature must be between 0.0 and 2.0, got {temperature}")
+    if not 0.0 < temperature <= 2.0:
+        raise ValidationError(f"temperature must be greater than 0.0 and at most 2.0, got {temperature}")
     
     if not 0.0 <= top_p <= 1.0:
         raise ValidationError(f"top_p must be between 0.0 and 1.0, got {top_p}")

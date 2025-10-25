@@ -57,6 +57,9 @@ class InferenceConfig:
     max_input_tokens: int = int(os.getenv("MAX_INPUT_TOKENS", "4096"))
     max_total_tokens: int = int(os.getenv("MAX_TOTAL_TOKENS", "8192"))
     
+    # Character-to-token ratio estimate (approximate, varies by tokenizer and language)
+    chars_per_token_estimate: int = 4
+    
     # Timeout settings
     inference_timeout_seconds: int = int(os.getenv("INFERENCE_TIMEOUT", "120"))
     
