@@ -129,7 +129,7 @@ def validate_config() -> Tuple[bool, List[str]]:
         errors.append("Cannot use both 8-bit and 4-bit quantization simultaneously")
     
     # Validate numeric ranges
-    if not 0.0 <= inference_config.temperature <= 2.0:
+    if not 0.0 < inference_config.temperature <= 2.0:
         errors.append(f"Temperature must be between 0.0 and 2.0, got {inference_config.temperature}")
     
     if not 0.0 <= inference_config.top_p <= 1.0:
