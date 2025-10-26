@@ -237,15 +237,15 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"Handler called with request_id: {request_id}")
         
         # Log request metadata if enabled (redact sensitive content)
+        
+        # Extract input from event
+        input_data = event.get("input", {})
         if log_config.log_requests:
             logger.debug({
                 "request_id": request_id,
                 "input_keys": list(input_data.keys()) if input_data else [],
                 "prompt_length": len(str(input_data.get("prompt", ""))) if input_data else 0,
             })
-        
-        # Extract input from event
-        input_data = event.get("input", {})
         if not input_data:
             raise ValidationError("Missing 'input' field in request")
         
