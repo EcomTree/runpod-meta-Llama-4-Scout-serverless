@@ -53,7 +53,7 @@ services:
     
     # Volume for model cache (optional, speeds up subsequent runs)
     volumes:
-      - huggingface-cache:/root/.cache/huggingface
+      - huggingface-cache:/home/runpod/.cache/huggingface
     
     # Health check
     healthcheck:

@@ -1,5 +1,6 @@
 # Core ML/AI dependencies
-torch>=2.6.0
+# Note: Using torch>=2.1.2 to match Dockerfile base image (pytorch/pytorch:2.1.2-cuda12.1-cudnn8-runtime)
+torch>=2.1.2,<2.7.0
 transformers>=4.50.0
 accelerate>=0.25.0
 huggingface-hub>=0.20.2

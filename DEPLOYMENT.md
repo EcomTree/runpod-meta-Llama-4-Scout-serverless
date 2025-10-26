@@ -379,10 +379,10 @@ Approximate costs on RunPod (as of 2024):
 
 ## Support Resources
 
-- **RunPod Docs**: https://docs.runpod.io
-- **RunPod Discord**: https://discord.gg/runpod
-- **Support**: support@runpod.io
-- **Status Page**: https://status.runpod.io
+- **RunPod Docs**: <https://docs.runpod.io>
+- **RunPod Discord**: <https://discord.gg/runpod>
+- **Support**: <support@runpod.io>
+- **Status Page**: <https://status.runpod.io>
 
 ---
 

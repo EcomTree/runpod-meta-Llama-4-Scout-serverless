@@ -131,12 +131,23 @@ if [[ -z "${CODEX_COMMON_HELPERS_LOADED:-}" ]]; then
     }
 
     check_cuda_support() {
-        if python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null; then
+        if python3 - <<'PY' 2>/dev/null
+import sys
+try:
+    import torch
+    sys.exit(0 if torch.cuda.is_available() else 1)
+except Exception:
+    sys.exit(2)
+PY
+        then
             echo_success "CUDA is available"
             
-            python3 -c "import torch; print(f\"  PyTorch: {torch.__version__}\")" 2>/dev/null
-            python3 -c "import torch; print(f\"  CUDA Version: {torch.version.cuda}\")" 2>/dev/null || true
-            python3 -c "import torch; print(f\"  GPU Count: {torch.cuda.device_count()}\")" 2>/dev/null || true
+            python3 - <<'PY' 2>/dev/null || true
+import torch
+print(f"  PyTorch: {torch.__version__}")
+print(f"  CUDA Version: {getattr(torch.version, 'cuda', 'unknown')}")
+print(f"  GPU Count: {torch.cuda.device_count()}")
+PY
         else
             echo_warning "CUDA is not available - GPU support will be limited"
         fi
