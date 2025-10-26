@@ -14,12 +14,18 @@ def start_health_server_thread():
         from src.health_server import start_health_server
         logger.info("Starting health check server in background thread...")
         start_health_server()
-    except Exception as e:
-        # Catch all exceptions since start_health_server() can raise many types
-        # (ValueError, TypeError, ConfigError, RuntimeError, OSError, etc.)
+    except (ValueError, TypeError, RuntimeError, OSError, ImportError) as e:
+        # Catch specific exceptions that start_health_server() can raise
         logger.error(
             "Health server failed to start. Health monitoring is DISABLED for this process. "
             "This is non-fatal and the main handler will continue running, but health checks will not be available. "
+            f"Exception: {e!s}"
+        )
+        logger.debug("Exception details:", exc_info=True)
+    except Exception as e:
+        # Catch any other unexpected exceptions
+        logger.error(
+            "Health server failed with unexpected error. Health monitoring is DISABLED for this process. "
             f"Exception: {e!s}"
         )
         logger.debug("Exception details:", exc_info=True)
@@ -73,10 +79,13 @@ def main():
         logger.error("Failed to import runpod. Is runpod package installed?")
         logger.error(f"Error: {e!s}")
         sys.exit(1)
-    except Exception as e:
-        # Catch all exceptions since runpod.serverless.start() can raise many types
-        # (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError, etc.)
+    except (ValueError, TypeError, AttributeError, KeyError, RuntimeError, OSError) as e:
+        # Catch specific exceptions that runpod.serverless.start() can raise
         logger.exception(f"Failed to start RunPod handler: {e!s}")
+        sys.exit(1)
+    except Exception as e:
+        # Catch any other unexpected exceptions with full traceback for debugging
+        logger.exception(f"Failed to start RunPod handler with unexpected error: {e!s}")
         sys.exit(1)
 
 
