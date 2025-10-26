@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  llama4-scout:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: llama4-scout-runpod:latest
+    container_name: llama4-scout-runpod
+    
+    # GPU configuration
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    
+    # Environment variables
+    environment:
+      # Required: Hugging Face token
+      - HF_TOKEN=${HF_TOKEN}
+      
+      # Model configuration
+      - MODEL_ID=meta-llama/Llama-4-Scout-17B-16E-Instruct
+      - DEVICE_MAP=auto
+      - TORCH_DTYPE=bfloat16
+      - ENABLE_FLASH_ATTENTION=true
+      
+      # Inference configuration
+      - DEFAULT_MAX_NEW_TOKENS=512
+      - DEFAULT_TEMPERATURE=0.7
+      - DEFAULT_TOP_P=0.9
+      - DEFAULT_TOP_K=50
+      
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+      - LOG_METRICS=true
+      
+      # Server configuration
+      - HEALTH_CHECK_HOST=0.0.0.0
+      - HEALTH_CHECK_PORT=8000
+      - MODEL_WARMUP=true
+      
+      # RunPod configuration (optional for local testing)
+      - AUTOLOAD_MODEL=true
+    
+    # Port mapping
+    ports:
+      - "8000:8000"  # Health check endpoint
+    
+    # Volume for model cache (optional, speeds up subsequent runs)
+    volumes:
+      - huggingface-cache:/home/runpod/.cache/huggingface
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python3", "/app/scripts/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  huggingface-cache:
+    driver: local
+
