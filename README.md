@@ -35,18 +35,41 @@ Production-ready serverless deployment solution for the **meta-llama/Llama-4-Sco
 ├── tests/
 │   └── test_handler.py       # Unit tests
 ├── scripts/
+│   ├── setup.sh              # Codex environment setup script
+│   ├── common-codex.sh       # Shared Codex helpers
+│   ├── healthcheck.py        # Health check script
 │   └── test_local.py         # Local testing script
 ├── docker/
 │   └── .dockerignore         # Docker ignore patterns
 ├── Dockerfile                # Multi-stage Docker build
 ├── docker-compose.yml        # Local development setup
 ├── requirements.txt          # Python dependencies
+├── CODEX_SETUP.md            # Codex environment setup guide
 └── README.md                 # This file
 ```
 
 ## 🔧 Local Development & Testing
 
-### 1. Setup Environment
+### Codex Setup (Recommended)
+
+For quick setup in RunPod Codex or similar cloud environments:
+
+1. **Go to Codex Setup Script** and paste:
+```bash
+curl -fsSL https://raw.githubusercontent.com/EcomTree/runpod-meta-Llama-4-Scout-serverless/main/scripts/setup.sh | bash
+```
+
+2. **Set Environment Variables** in Codex UI:
+   - `HF_TOKEN`: Your Hugging Face token (required)
+   - `MODEL_ID`: `meta-llama/Llama-4-Scout-17B-16E-Instruct`
+   - `TORCH_DTYPE`: `bfloat16`
+   - `ENABLE_FLASH_ATTENTION`: `true`
+
+3. **See [CODEX_SETUP.md](CODEX_SETUP.md) for detailed instructions**
+
+### Local Setup
+
+#### 1. Setup Environment
 
 ```bash
 # Clone the repository
