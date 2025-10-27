@@ -396,11 +396,14 @@ validate_setup() {
     local torch_available
     
     # First check if torch is installed
-    if python3 -c "import torch" 2>/dev/null; then
+    # Combine torch availability and CUDA check in one Python invocation
+    cuda_check=$(python3 -c "try: import torch; print('INSTALLED'); print(torch.cuda.is_available())\nexcept ImportError: print('NOT_INSTALLED')" 2>/dev/null | tail -n 2)
+    torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
+    cuda_available=$(echo "$cuda_check" | tail -n 1 | tr -d '\r\n')
+
+    if [ "$torch_status" = "INSTALLED" ]; then
         torch_available=true
-        cuda_check=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | tail -n 1 | tr -d '\r\n')
-        
-        if [ "$cuda_check" = "True" ]; then
+        if [ "$cuda_available" = "True" ]; then
             log_success "✓ CUDA available"
         else
             log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
