@@ -497,7 +497,15 @@ main() {
     
     # Check CUDA - single Python invocation for efficiency
     local cuda_check_summary
-    cuda_check_summary=$(python3 -c "try: import torch; print('INSTALLED'); print(torch.cuda.is_available())\nexcept ImportError: print('NOT_INSTALLED')" 2>/dev/null | tail -n 2)
+    cuda_check_summary=$(python3 2>/dev/null <<EOF
+try:
+    import torch
+    print('INSTALLED')
+    print(torch.cuda.is_available())
+except ImportError:
+    print('NOT_INSTALLED')
+EOF
+    | tail -n 2)
     local torch_installed=$(echo "$cuda_check_summary" | head -n 1 | tr -d '\r\n')
     local cuda_status=$(echo "$cuda_check_summary" | tail -n 1 | tr -d '\r\n')
     
