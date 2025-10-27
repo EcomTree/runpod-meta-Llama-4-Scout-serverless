@@ -31,25 +31,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Upgrade pip and install essential build tools
-RUN pip install --upgrade \
+# Upgrade pip and install essential build tools + development/testing tools
+# Consolidated into single RUN to reduce image layers
+RUN pip install --no-cache-dir --upgrade \
     pip \
     setuptools \
     wheel \
-    build
-
-# Install Python development and testing tools
-RUN pip install \
-    pytest>=7.4.3 \
-    pytest-cov>=4.1.0 \
-    pytest-asyncio>=0.21.1 \
-    black>=23.12.1 \
-    flake8>=6.1.0 \
-    mypy>=1.7.1 \
-    isort>=5.13.2 \
-    pylint>=3.0.3 \
-    ipython>=8.18.1 \
-    ipdb>=0.13.13
+    build && \
+    pip install --no-cache-dir \
+    pytest==7.4.3 \
+    pytest-cov==4.1.0 \
+    pytest-asyncio==0.21.1 \
+    black==23.12.1 \
+    flake8==6.1.0 \
+    mypy==1.7.1 \
+    isort==5.13.2 \
+    pylint==3.0.3 \
+    ipython==8.18.1 \
+    ipdb==0.13.13
 
 # Set working directory
 WORKDIR /workspace
@@ -57,7 +56,7 @@ WORKDIR /workspace
 # Pre-install project dependencies for faster startup
 # This layer will be cached unless requirements.txt changes
 COPY requirements.txt /workspace/requirements.txt
-RUN pip install -r /workspace/requirements.txt
+RUN pip install --no-cache-dir -r /workspace/requirements.txt
 
 # Create common cache directories in a location accessible to all users
 RUN mkdir -p /workspace/.cache/huggingface && \
