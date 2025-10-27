@@ -6,7 +6,6 @@ FROM pytorch/pytorch:2.1.2-cuda12.1-cudnn8-devel
 # Set environment variables for optimal Python behavior
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     DEBIAN_FRONTEND=noninteractive \
     TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
@@ -33,14 +32,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean
 
 # Upgrade pip and install essential build tools
-RUN pip install --no-cache-dir --upgrade \
+RUN pip install --upgrade \
     pip \
     setuptools \
     wheel \
     build
 
 # Install Python development and testing tools
-RUN pip install --no-cache-dir \
+RUN pip install \
     pytest>=7.4.3 \
     pytest-cov>=4.1.0 \
     pytest-asyncio>=0.21.1 \
@@ -57,9 +56,8 @@ WORKDIR /workspace
 
 # Pre-install project dependencies for faster startup
 # This layer will be cached unless requirements.txt changes
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
-    rm /tmp/requirements.txt
+COPY requirements.txt /workspace/requirements.txt
+RUN pip install -r /workspace/requirements.txt
 
 # Create common cache directories
 RUN mkdir -p /root/.cache/huggingface && \
@@ -77,5 +75,5 @@ ENV HF_HOME=/root/.cache/huggingface \
 SHELL ["/bin/bash", "-c"]
 
 # Default command: keep container running
-CMD ["/bin/bash"]
+CMD ["sleep", "infinity"]
 
