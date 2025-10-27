@@ -231,7 +231,7 @@ setup_repository() {
     # Verify both file structure AND project identity
     if [ -f "src/handler.py" ] && [ -f "requirements.txt" ]; then
         # Check if this is actually the correct project by looking for project-specific markers
-        if [ -f "README.md" ] && grep -q "Llama.*Scout" README.md 2>/dev/null; then
+        if [ -f "README.md" ] && grep -q "Project: runpod-meta-Llama-4-Scout-serverless" README.md 2>/dev/null; then
             log_info "Already in project directory: $(pwd)"
             PROJECT_ROOT="$(pwd)"
             return 0
