@@ -277,7 +277,7 @@ setup_repository() {
     fi
 
     # Check if project exists in workspace
-    if [ -d "$target_dir" ] && is_project_directory "$target_dir"; then
+    if [ -d "$target_dir" ] && is_target_project "$target_dir"; then
         log_info "Project directory already exists, skipping clone"
         cd "$target_dir"
         PROJECT_ROOT="$target_dir"
@@ -508,8 +508,10 @@ main() {
     log_success "✨ Setup completed successfully!"
     echo
     log_info "📋 Environment Summary:"
-    echo "   ├─ Python: $(python3 --version 2>&1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1 || echo 'N/A')"
-    echo "   ├─ pip: $(python3 -m pip --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1 || echo 'N/A')"
+    PYTHON_VERSION=$(python3 --version 2>&1 | grep -oE '[0-9]+(\.[0-9]+)+' | head -n1)
+    echo "   ├─ Python: ${PYTHON_VERSION:-N/A}"
+    PIP_VERSION=$(python3 -m pip --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+' | head -n1)
+    echo "   ├─ pip: ${PIP_VERSION:-N/A}"
     echo "   ├─ Workspace: $(pwd)"
     echo "   ├─ Virtualenv: $(dirname "$(command -v python 2>/dev/null || echo 'N/A')")"
     

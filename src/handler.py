@@ -6,7 +6,7 @@ Main entry point for inference requests.
 import time
 import torch
 from typing import Dict, Any, Optional, Tuple
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from src.model_loader import get_model_loader, ModelLoader
 from src.config import inference_config, log_config, model_config
@@ -81,9 +81,7 @@ class InferenceInput(BaseModel):
             # Pydantic expects ValueError for validation failures
             raise ValueError(str(e)) from e
     
-    class Config:
-        """Pydantic config."""
-        extra = "forbid"  # Reject unknown fields
+    model_config = ConfigDict(extra="forbid")
 
 
 def validate_input(input_data: Dict[str, Any]) -> InferenceInput:
@@ -149,7 +147,7 @@ def generate_text(
             padding=True,
             truncation=True,
             max_length=inference_config.max_input_tokens,
-        ).to(model.device)
+        ).to(next(model.parameters()).device)
         tokenization_time = time.time() - tokenization_start
         
         input_token_count = inputs.input_ids.shape[1]
@@ -238,12 +236,16 @@ def handler(event: Dict[str, Any]) -> Dict[str, Any]:
     try:
         logger.info(f"Handler called with request_id: {request_id}")
         
-        # Log request if enabled
-        if log_config.log_requests:
-            logger.debug(f"Request data: {event}")
+        # Log request metadata if enabled (redact sensitive content)
         
         # Extract input from event
         input_data = event.get("input", {})
+        if log_config.log_requests:
+            logger.debug({
+                "request_id": request_id,
+                "input_keys": list(input_data.keys()) if input_data else [],
+                "prompt_length": len(str(input_data.get("prompt", ""))) if input_data else 0,
+            })
         if not input_data:
             raise ValidationError("Missing 'input' field in request")
         

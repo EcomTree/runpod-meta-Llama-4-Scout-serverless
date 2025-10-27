@@ -232,6 +232,13 @@ class ModelLoader:
             Optional[BitsAndBytesConfig]: Quantization config or None
         """
         if model_config.load_in_4bit:
+            try:
+                import bitsandbytes  # noqa: F401
+            except ImportError as e:
+                raise ModelLoadError(
+                    "4-bit quantization requested but bitsandbytes is not installed. "
+                    "Install with: pip install bitsandbytes"
+                ) from e
             logger.info("Using 4-bit quantization")
             return BitsAndBytesConfig(
                 load_in_4bit=True,
@@ -240,6 +247,13 @@ class ModelLoader:
                 bnb_4bit_quant_type="nf4",
             )
         elif model_config.load_in_8bit:
+            try:
+                import bitsandbytes  # noqa: F401
+            except ImportError as e:
+                raise ModelLoadError(
+                    "8-bit quantization requested but bitsandbytes is not installed. "
+                    "Install with: pip install bitsandbytes"
+                ) from e
             logger.info("Using 8-bit quantization")
             return BitsAndBytesConfig(
                 load_in_8bit=True,
