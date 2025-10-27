@@ -397,7 +397,15 @@ validate_setup() {
     
     # First check if torch is installed
     # Combine torch availability and CUDA check in one Python invocation
-    cuda_check=$(python3 -c "try: import torch; print('INSTALLED'); print(torch.cuda.is_available())\nexcept ImportError: print('NOT_INSTALLED')" 2>/dev/null | tail -n 2)
+    cuda_check=$(python3 - 2>/dev/null <<EOF
+try:
+    import torch
+    print('INSTALLED')
+    print(torch.cuda.is_available())
+except ImportError:
+    print('NOT_INSTALLED')
+EOF
+    | tail -n 2)
     torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
     cuda_available=$(echo "$cuda_check" | tail -n 1 | tr -d '\r\n')
 
