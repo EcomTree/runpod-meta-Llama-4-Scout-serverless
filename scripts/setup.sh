@@ -107,7 +107,8 @@ is_target_project() {
 # Check CUDA availability with PyTorch installation detection
 # Returns: 0 if CUDA available, 1 if not available or PyTorch not installed
 # Sets global variable: TORCH_INSTALLED
-# Note: tail -n 2 is defensive programming to handle potential warnings/extra output
+# Note: 'tail -n 2' retrieves the last 2 lines of Python output (torch status and CUDA availability),
+#       ensuring any preceding warnings/extra output are ignored
 check_cuda_available() {
     local cuda_check torch_status cuda_status
     cuda_check=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
