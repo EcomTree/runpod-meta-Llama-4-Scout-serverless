@@ -55,6 +55,8 @@ WORKDIR /workspace
 
 # Pre-install project dependencies for faster startup
 # This layer will be cached unless requirements.txt changes
+# NOTE: Build context must be project root, not .cursor/ directory
+#       Example: docker build -f .cursor/Dockerfile -t my-image .
 COPY requirements.txt /workspace/requirements.txt
 RUN pip install --no-cache-dir -r /workspace/requirements.txt
 
