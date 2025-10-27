@@ -231,7 +231,7 @@ setup_repository() {
     # Verify both file structure AND project identity
     if [ -f "src/handler.py" ] && [ -f "requirements.txt" ]; then
         # Check if this is actually the correct project by looking for project-specific markers
-        if [ -f "README.md" ] && grep -q "Project: runpod-meta-Llama-4-Scout-serverless" README.md 2>/dev/null; then
+        if [ -f "README.md" ] && grep -q "Llama-4-Scout-17B-16E-Instruct RunPod Serverless" README.md 2>/dev/null; then
             log_info "Already in project directory: $(pwd)"
             PROJECT_ROOT="$(pwd)"
             return 0
@@ -398,12 +398,9 @@ validate_setup() {
     fi
 
     # Check GPU availability - single Python invocation for efficiency
+    local torch_status cuda_available
     local cuda_check
-    local torch_status
-    local cuda_available
-    
-    # Combine torch availability and CUDA check in one Python invocation
-    cuda_check=$(python3 - 2>/dev/null <<EOF
+    cuda_check=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
 try:
     import torch
     print('INSTALLED')
@@ -412,7 +409,7 @@ except ImportError:
     print('NOT_INSTALLED')
     print(False)
 EOF
-    | tail -n 2)
+    )
     torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
     cuda_available=$(echo "$cuda_check" | tail -n 1 | tr -d '\r\n')
 
@@ -420,7 +417,7 @@ EOF
         if [ "$cuda_available" = "True" ]; then
             log_success "✓ CUDA available"
         else
-            log_info "CUDA not available (normal in codex, required for RunPod deployment)"
+            log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
         fi
     else
         log_warning "✗ PyTorch not installed - cannot check CUDA availability"
@@ -451,10 +448,10 @@ main() {
 
     # Check environment
     if is_codex_environment; then
-        log_success "codex environment detected"
+        log_success "Codex environment detected"
         export IN_CODEX=true
     else
-        log_warning "Not in codex environment - some features may differ"
+        log_warning "Not in Codex environment - some features may differ"
         export IN_CODEX=false
     fi
 
@@ -496,18 +493,20 @@ main() {
     echo "   ├─ Virtualenv: $(dirname "$(command -v python 2>/dev/null || echo 'N/A')")"
     
     # Check CUDA - single Python invocation for efficiency
+    local torch_installed cuda_status
     local cuda_check_summary
-    cuda_check_summary=$(python3 2>/dev/null <<EOF
+    cuda_check_summary=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
 try:
     import torch
     print('INSTALLED')
     print(torch.cuda.is_available())
 except ImportError:
     print('NOT_INSTALLED')
+    print(False)
 EOF
-    | tail -n 2)
-    local torch_installed=$(echo "$cuda_check_summary" | head -n 1 | tr -d '\r\n')
-    local cuda_status=$(echo "$cuda_check_summary" | tail -n 1 | tr -d '\r\n')
+    )
+    torch_installed=$(echo "$cuda_check_summary" | head -n 1 | tr -d '\r\n')
+    cuda_status=$(echo "$cuda_check_summary" | tail -n 1 | tr -d '\r\n')
     
     if [ "$torch_installed" = "INSTALLED" ]; then
         if [ "$cuda_status" = "True" ]; then
@@ -529,7 +528,7 @@ EOF
     echo
 
     if [ "$IN_CODEX" = true ]; then
-        log_info "💡 codex-specific tips:"
+        log_info "💡 Codex-specific tips:"
         echo "   • Enable 'Container Caching' for faster restarts"
         echo "   • Set HF_TOKEN in environment variables"
         echo "   • Test locally before deploying to RunPod"
