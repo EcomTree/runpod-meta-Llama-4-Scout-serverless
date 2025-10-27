@@ -235,7 +235,7 @@ setup_repository() {
     fi
 
     # Check if project exists in workspace
-    if [ -d "$target_dir" ] && [ -f "$target_dir/src/handler.py" ]; then
+    if [ -d "$target_dir" ] && [ -f "$target_dir/src/handler.py" ] && [ -f "$target_dir/requirements.txt" ]; then
         log_info "Project directory already exists, skipping clone"
         cd "$target_dir"
         PROJECT_ROOT="$target_dir"
@@ -470,7 +470,9 @@ main() {
     echo "   ├─ Virtualenv: $(dirname "$(command -v python 2>/dev/null || echo 'N/A')")"
     
     # Check CUDA
-    if python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | grep -q True; then
+    local cuda_summary
+    cuda_summary=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | tail -n 1 | tr -d '\r\n' || echo "False")
+    if [ "$cuda_summary" = "True" ]; then
         echo "   ├─ CUDA: Available"
         python3 -c "import torch; print(f\"   └─ GPU: {torch.cuda.get_device_name(0)}\")" 2>/dev/null || echo "   └─ GPU: Unknown"
     else
