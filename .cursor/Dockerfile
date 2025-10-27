@@ -12,22 +12,22 @@ ENV PYTHONUNBUFFERED=1 \
 
 # Install essential system dependencies and development tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential=12.9ubuntu1 \
-    git=1:2.34.1-1ubuntu1.10 \
-    curl=7.81.0-1ubuntu1.14 \
-    wget=1.21.2-2ubuntu1 \
-    ca-certificates=20230311ubuntu0.22.04.1 \
-    vim=2:8.2.3995-1ubuntu2.9 \
-    nano=6.2-1ubuntu1 \
-    less=590-1ubuntu0.22.04.1 \
-    htop=3.0.5-7build2 \
-    ncdu=1.16-1 \
-    tree=2.0.2-1 \
-    zip=3.0-12build2 \
-    unzip=6.0-26ubuntu3.1 \
-    rsync=3.2.3-8ubuntu3.3 \
-    openssh-client=1:8.9p1-3ubuntu0.4 \
-    software-properties-common=0.99.22.9 \
+    build-essential=12.9* \
+    git=1:2.34.* \
+    curl=7.81.* \
+    wget=1.21.* \
+    ca-certificates \
+    vim=2:8.2.* \
+    nano=6.2.* \
+    less=590.* \
+    htop=3.0.* \
+    ncdu=1.16.* \
+    tree=2.0.* \
+    zip=3.0.* \
+    unzip=6.0.* \
+    rsync=3.2.* \
+    openssh-client=1:8.9.* \
+    software-properties-common=0.99.* \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
