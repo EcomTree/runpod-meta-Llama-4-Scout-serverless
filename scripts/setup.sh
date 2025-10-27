@@ -393,11 +393,21 @@ validate_setup() {
 
     # Check GPU availability
     local cuda_check
-    cuda_check=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | tail -n 1 | tr -d '\r\n' || echo "False")
-    if [ "$cuda_check" = "True" ]; then
-        log_success "✓ CUDA available"
+    local torch_available
+    
+    # First check if torch is installed
+    if python3 -c "import torch" 2>/dev/null; then
+        torch_available=true
+        cuda_check=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | tail -n 1 | tr -d '\r\n')
+        
+        if [ "$cuda_check" = "True" ]; then
+            log_success "✓ CUDA available"
+        else
+            log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
+        fi
     else
-        log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
+        torch_available=false
+        log_warning "✗ PyTorch not installed - cannot check CUDA availability"
     fi
 
     # Check required files
@@ -473,12 +483,16 @@ main() {
     
     # Check CUDA
     local cuda_summary
-    cuda_summary=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | tail -n 1 | tr -d '\r\n' || echo "False")
-    if [ "$cuda_summary" = "True" ]; then
-        echo "   ├─ CUDA: Available"
-        python3 -c "import torch; print(f\"   └─ GPU: {torch.cuda.get_device_name(0)}\")" 2>/dev/null || echo "   └─ GPU: Unknown"
+    if python3 -c "import torch" 2>/dev/null; then
+        cuda_summary=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | tail -n 1 | tr -d '\r\n')
+        if [ "$cuda_summary" = "True" ]; then
+            echo "   ├─ CUDA: Available"
+            python3 -c "import torch; print(f\"   └─ GPU: {torch.cuda.get_device_name(0)}\")" 2>/dev/null || echo "   └─ GPU: Unknown"
+        else
+            echo "   └─ CUDA: Not available (GPU required)"
+        fi
     else
-        echo "   └─ CUDA: Not available (GPU required)"
+        echo "   └─ PyTorch: Not installed (cannot check CUDA)"
     fi
     
     echo
