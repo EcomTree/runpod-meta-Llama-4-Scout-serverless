@@ -11,24 +11,25 @@ ENV PYTHONUNBUFFERED=1 \
     TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 
 # Install essential system dependencies and development tools
-# NOTE: Versions pinned for Ubuntu 22.04 (base image). Verify with apt-cache policy <package> if build fails.
+# NOTE: Wildcard versioning (e.g., 1:2.34.*) allows patch updates while pinning major.minor versions.
+#       This prevents build failures when Ubuntu publishes security updates that replace exact versions.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential=12.9ubuntu3 \
-    git=1:2.34.1-1ubuntu1.11 \
-    curl=7.81.0-1ubuntu1.16 \
-    wget=1.21.2-2ubuntu1.1 \
-    ca-certificates=20230311ubuntu0.22.04.1 \
-    vim=2:8.2.3995-1ubuntu2.16 \
-    nano=6.2-1 \
-    less=590-1ubuntu0.22.04.3 \
-    htop=3.0.5-7build2 \
-    ncdu=1.15.1-1 \
-    tree=2.0.2-1 \
-    zip=3.0-12build2 \
-    unzip=6.0-26ubuntu3.2 \
-    rsync=3.2.7-0ubuntu0.22.04.2 \
-    openssh-client=1:8.9p1-3ubuntu0.10 \
-    software-properties-common=0.99.22.9 \
+    build-essential=12.9* \
+    git=1:2.34.* \
+    curl=7.81.* \
+    wget=1.21.* \
+    ca-certificates=20230311* \
+    vim=2:8.2.* \
+    nano=6.2* \
+    less=590* \
+    htop=3.0.* \
+    ncdu=1.15* \
+    tree=2.0* \
+    zip=3.0* \
+    unzip=6.0* \
+    rsync=3.2.* \
+    openssh-client=1:8.9* \
+    software-properties-common=0.99.* \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
