@@ -59,16 +59,16 @@ WORKDIR /workspace
 COPY requirements.txt /workspace/requirements.txt
 RUN pip install -r /workspace/requirements.txt
 
-# Create common cache directories
-RUN mkdir -p /root/.cache/huggingface && \
-    mkdir -p /root/.cache/torch && \
-    mkdir -p /root/.cache/pip
+# Create common cache directories in a location accessible to all users
+RUN mkdir -p /workspace/.cache/huggingface && \
+    mkdir -p /workspace/.cache/torch && \
+    mkdir -p /workspace/.cache/pip
 
 # Set environment variables for caching
-ENV HF_HOME=/root/.cache/huggingface \
-    TRANSFORMERS_CACHE=/root/.cache/huggingface \
-    HF_DATASETS_CACHE=/root/.cache/huggingface/datasets \
-    TORCH_HOME=/root/.cache/torch \
+ENV HF_HOME=/workspace/.cache/huggingface \
+    TRANSFORMERS_CACHE=/workspace/.cache/huggingface \
+    HF_DATASETS_CACHE=/workspace/.cache/huggingface/datasets \
+    TORCH_HOME=/workspace/.cache/torch \
     PYTHONPATH=/workspace
 
 # Set default shell to bash
