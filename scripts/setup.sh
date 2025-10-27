@@ -403,7 +403,6 @@ validate_setup() {
     # Check required files
     local required_files=("src/handler.py" "src/config.py" "requirements.txt" "Dockerfile" "README.md")
     local all_files_ok=true
-    
     for file in "${required_files[@]}"; do
         if [ -f "$file" ]; then
             log_success "✓ $file"
