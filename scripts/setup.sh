@@ -9,7 +9,7 @@ set -euo pipefail
 
 # Script configuration
 SCRIPT_VERSION="1.0"
-PROJECT_NAME="runpod-llama4-scout-serverless"
+PROJECT_NAME="runpod-meta-Llama-4-Scout-serverless"
 DEFAULT_REPO_URL="https://github.com/EcomTree/runpod-meta-Llama-4-Scout-serverless.git"
 
 # Color codes for output
@@ -225,16 +225,28 @@ setup_workspace() {
 # Clone or update repository
 setup_repository() {
     local repo_url="${1:-$DEFAULT_REPO_URL}"
+    local target_dir="${WORKSPACE_DIR}/${PROJECT_NAME}"
 
-    if [ -d "$PROJECT_ROOT" ]; then
-        log_info "Project directory already exists, skipping clone"
-        cd "$PROJECT_ROOT"
+    # Check if we're already in the project directory
+    if [ -f "src/handler.py" ] && [ -f "requirements.txt" ]; then
+        log_info "Already in project directory: $(pwd)"
+        PROJECT_ROOT="$(pwd)"
         return 0
     fi
 
-    log_info "Cloning repository..."
-    if retry git clone "$repo_url" "$PROJECT_ROOT"; then
-        cd "$PROJECT_ROOT"
+    # Check if project exists in workspace
+    if [ -d "$target_dir" ] && [ -f "$target_dir/src/handler.py" ] && [ -f "$target_dir/requirements.txt" ]; then
+        log_info "Project directory already exists, skipping clone"
+        cd "$target_dir"
+        PROJECT_ROOT="$target_dir"
+        return 0
+    fi
+
+    # Clone repository
+    log_info "Cloning repository to $target_dir..."
+    if retry git clone "$repo_url" "$target_dir"; then
+        cd "$target_dir"
+        PROJECT_ROOT="$target_dir"
         log_success "Repository cloned"
     else
         log_error "Failed to clone repository"
@@ -352,6 +364,11 @@ setup_git() {
 validate_setup() {
     log_info "Validating setup..."
 
+    # Ensure we're in the project directory
+    if [ -n "${PROJECT_ROOT:-}" ] && [ -d "$PROJECT_ROOT" ]; then
+        cd "$PROJECT_ROOT"
+    fi
+
     # Check Python syntax
     if [ -f "src/handler.py" ]; then
         if python3 -m py_compile src/handler.py 2>/dev/null; then
@@ -360,7 +377,7 @@ validate_setup() {
             log_warning "✗ Python syntax issues detected"
         fi
     else
-        log_warning "✗ src/handler.py not found in current directory"
+        log_warning "✗ src/handler.py not found in $(pwd)"
     fi
 
     # Check if handler can be imported
@@ -368,30 +385,38 @@ validate_setup() {
         if python3 -c "from src.handler import handler" 2>/dev/null; then
             log_success "✓ Handler importable"
         else
-            log_warning "✗ Handler import issues"
+            log_warning "✗ Handler import issues (may need proper environment)"
         fi
     else
         log_warning "✗ Cannot test handler import - src/handler.py not found"
     fi
 
     # Check GPU availability
-    if python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null; then
+    local cuda_check
+    cuda_check=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | tail -n 1 | tr -d '\r\n' || echo "False")
+    if [ "$cuda_check" = "True" ]; then
         log_success "✓ CUDA available"
     else
-        log_warning "✗ CUDA not available (GPU required for model inference)"
+        log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
     fi
 
     # Check required files
     local required_files=("src/handler.py" "src/config.py" "requirements.txt" "Dockerfile" "README.md")
+    local all_files_ok=true
     for file in "${required_files[@]}"; do
         if [ -f "$file" ]; then
             log_success "✓ $file"
         else
-            log_warning "✗ $file missing"
+            log_warning "✗ $file missing in $(pwd)"
+            all_files_ok=false
         fi
     done
 
-    log_success "Setup validation completed"
+    if $all_files_ok; then
+        log_success "Setup validation completed - all files present"
+    else
+        log_warning "Setup validation completed with warnings"
+    fi
 }
 
 # Main setup function
@@ -447,7 +472,9 @@ main() {
     echo "   ├─ Virtualenv: $(dirname "$(command -v python 2>/dev/null || echo 'N/A')")"
     
     # Check CUDA
-    if python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | grep -q True; then
+    local cuda_summary
+    cuda_summary=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | tail -n 1 | tr -d '\r\n' || echo "False")
+    if [ "$cuda_summary" = "True" ]; then
         echo "   ├─ CUDA: Available"
         python3 -c "import torch; print(f\"   └─ GPU: {torch.cuda.get_device_name(0)}\")" 2>/dev/null || echo "   └─ GPU: Unknown"
     else
