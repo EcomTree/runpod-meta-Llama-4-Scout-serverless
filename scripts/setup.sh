@@ -90,6 +90,46 @@ is_codex_environment() {
     [ -d "/workspace" ]
 }
 
+# Check if directory is a valid project directory
+is_project_directory() {
+    local dir="${1:-.}"
+    [ -f "$dir/src/handler.py" ] && [ -f "$dir/requirements.txt" ]
+}
+
+# Check if directory is the target project (verifies identity)
+is_target_project() {
+    local dir="${1:-.}"
+    is_project_directory "$dir" && \
+    [ -f "$dir/README.md" ] && \
+    grep -q "Llama-4-Scout-17B-16E-Instruct RunPod Serverless" "$dir/README.md" 2>/dev/null
+}
+
+# Check CUDA availability with PyTorch installation detection
+# Returns: 0 if CUDA available, 1 if not available or PyTorch not installed
+# Sets global variables: TORCH_INSTALLED, CUDA_AVAILABLE
+check_cuda_available() {
+    local cuda_check torch_status cuda_status
+    cuda_check=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
+try:
+    import torch
+    print('INSTALLED')
+    print(torch.cuda.is_available())
+except ImportError:
+    print('NOT_INSTALLED')
+    print(False)
+EOF
+    )
+    torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
+    cuda_status=$(echo "$cuda_check" | tail -n 1 | tr -d '\r\n')
+    
+    # Export results for caller
+    TORCH_INSTALLED="$torch_status"
+    CUDA_AVAILABLE="$cuda_status"
+    
+    # Return 0 only if both installed and available
+    [ "$torch_status" = "INSTALLED" ] && [ "$cuda_status" = "True" ]
+}
+
 # Python dependencies
 PYTHON_PACKAGES=("torch" "transformers" "accelerate" "huggingface-hub" "bitsandbytes" \
                  "runpod" "fastapi" "uvicorn" "pydantic" "python-dotenv")
@@ -229,19 +269,16 @@ setup_repository() {
 
     # Check if we're already in the project directory
     # Verify both file structure AND project identity
-    if [ -f "src/handler.py" ] && [ -f "requirements.txt" ]; then
-        # Check if this is actually the correct project by looking for project-specific markers
-        if [ -f "README.md" ] && grep -q "Llama-4-Scout-17B-16E-Instruct RunPod Serverless" README.md 2>/dev/null; then
-            log_info "Already in project directory: $(pwd)"
-            PROJECT_ROOT="$(pwd)"
-            return 0
-        else
-            log_warning "Found similar structure but not the target project in $(pwd)"
-        fi
+    if is_target_project; then
+        log_info "Already in project directory: $(pwd)"
+        PROJECT_ROOT="$(pwd)"
+        return 0
+    elif is_project_directory; then
+        log_warning "Found similar structure but not the target project in $(pwd)"
     fi
 
     # Check if project exists in workspace
-    if [ -d "$target_dir" ] && [ -f "$target_dir/src/handler.py" ] && [ -f "$target_dir/requirements.txt" ]; then
+    if [ -d "$target_dir" ] && is_project_directory "$target_dir"; then
         log_info "Project directory already exists, skipping clone"
         cd "$target_dir"
         PROJECT_ROOT="$target_dir"
@@ -397,28 +434,11 @@ validate_setup() {
         log_warning "✗ Cannot test handler import - src/handler.py not found"
     fi
 
-    # Check GPU availability - single Python invocation for efficiency
-    local torch_status cuda_available
-    local cuda_check
-    cuda_check=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
-try:
-    import torch
-    print('INSTALLED')
-    print(torch.cuda.is_available())
-except ImportError:
-    print('NOT_INSTALLED')
-    print(False)
-EOF
-    )
-    torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
-    cuda_available=$(echo "$cuda_check" | tail -n 1 | tr -d '\r\n')
-
-    if [ "$torch_status" = "INSTALLED" ]; then
-        if [ "$cuda_available" = "True" ]; then
-            log_success "✓ CUDA available"
-        else
-            log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
-        fi
+    # Check GPU availability
+    if check_cuda_available; then
+        log_success "✓ CUDA available"
+    elif [ "$TORCH_INSTALLED" = "INSTALLED" ]; then
+        log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
     else
         log_warning "✗ PyTorch not installed - cannot check CUDA availability"
     fi
@@ -494,29 +514,12 @@ main() {
     echo "   ├─ Workspace: $(pwd)"
     echo "   ├─ Virtualenv: $(dirname "$(command -v python 2>/dev/null || echo 'N/A')")"
     
-    # Check CUDA - single Python invocation for efficiency
-    local torch_installed cuda_status
-    local cuda_check_summary
-    cuda_check_summary=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
-try:
-    import torch
-    print('INSTALLED')
-    print(torch.cuda.is_available())
-except ImportError:
-    print('NOT_INSTALLED')
-    print(False)
-EOF
-    )
-    torch_installed=$(echo "$cuda_check_summary" | head -n 1 | tr -d '\r\n')
-    cuda_status=$(echo "$cuda_check_summary" | tail -n 1 | tr -d '\r\n')
-    
-    if [ "$torch_installed" = "INSTALLED" ]; then
-        if [ "$cuda_status" = "True" ]; then
-            echo "   ├─ CUDA: Available"
-            python3 -c "import torch; print(f\"   └─ GPU: {torch.cuda.get_device_name(0)}\")" 2>/dev/null || echo "   └─ GPU: Unknown"
-        else
-            echo "   └─ CUDA: Not available (GPU required)"
-        fi
+    # Check CUDA
+    if check_cuda_available; then
+        echo "   ├─ CUDA: Available"
+        python3 -c "import torch; print(f\"   └─ GPU: {torch.cuda.get_device_name(0)}\")" 2>/dev/null || echo "   └─ GPU: Unknown"
+    elif [ "$TORCH_INSTALLED" = "INSTALLED" ]; then
+        echo "   └─ CUDA: Not available (GPU required)"
     else
         echo "   └─ PyTorch: Not installed (cannot check CUDA)"
     fi
