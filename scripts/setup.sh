@@ -106,7 +106,7 @@ is_target_project() {
 
 # Check CUDA availability with PyTorch installation detection
 # Returns: 0 if CUDA available, 1 if not available or PyTorch not installed
-# Sets global variables: TORCH_INSTALLED, CUDA_AVAILABLE
+# Sets global variable: TORCH_INSTALLED
 check_cuda_available() {
     local cuda_check torch_status cuda_status
     cuda_check=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
@@ -122,9 +122,8 @@ EOF
     torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
     cuda_status=$(echo "$cuda_check" | tail -n 1 | tr -d '\r\n')
     
-    # Export results for caller
+    # Export torch installation status for caller
     TORCH_INSTALLED="$torch_status"
-    CUDA_AVAILABLE="$cuda_status"
     
     # Return 0 only if both installed and available
     [ "$torch_status" = "INSTALLED" ] && [ "$cuda_status" = "True" ]
@@ -410,6 +409,8 @@ validate_setup() {
     # Ensure we're in the project directory
     if [ -n "${PROJECT_ROOT:-}" ] && [ -d "$PROJECT_ROOT" ]; then
         cd "$PROJECT_ROOT"
+    else
+        log_warning "PROJECT_ROOT not set or missing; validation may be incomplete"
     fi
 
     # Check Python syntax
