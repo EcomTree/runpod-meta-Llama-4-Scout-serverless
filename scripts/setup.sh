@@ -107,6 +107,7 @@ is_target_project() {
 # Check CUDA availability with PyTorch installation detection
 # Returns: 0 if CUDA available, 1 if not available or PyTorch not installed
 # Sets global variable: TORCH_INSTALLED
+# Note: tail -n 2 is defensive programming to handle potential warnings/extra output
 check_cuda_available() {
     local cuda_check torch_status cuda_status
     cuda_check=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
@@ -273,7 +274,7 @@ setup_repository() {
         PROJECT_ROOT="$(pwd)"
         return 0
     elif is_project_directory; then
-        log_warning "Found similar structure but not the target project in $(pwd)"
+        log_warning "Found similar structure but not the target project in $(pwd). Checking workspace directory..."
     fi
 
     # Check if project exists in workspace
