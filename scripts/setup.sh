@@ -410,6 +410,7 @@ try:
     print(torch.cuda.is_available())
 except ImportError:
     print('NOT_INSTALLED')
+    print(False)
 EOF
     | tail -n 2)
     torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
