@@ -397,7 +397,7 @@ validate_setup() {
     if [ "$cuda_check" = "True" ]; then
         log_success "✓ CUDA available"
     else
-        log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
+        log_info "CUDA not available (normal in codex, required for RunPod deployment)"
     fi
 
     # Check required files
