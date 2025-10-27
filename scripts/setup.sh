@@ -9,7 +9,7 @@ set -euo pipefail
 
 # Script configuration
 SCRIPT_VERSION="1.0"
-PROJECT_NAME="runpod-llama4-scout-serverless"
+PROJECT_NAME="runpod-meta-Llama-4-Scout-serverless"
 DEFAULT_REPO_URL="https://github.com/EcomTree/runpod-meta-Llama-4-Scout-serverless.git"
 
 # Color codes for output
@@ -392,11 +392,12 @@ validate_setup() {
     fi
 
     # Check GPU availability
-    local cuda_check=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null || echo "False")
+    local cuda_check
+    cuda_check=$(python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | tail -n 1 | tr -d '\r\n' || echo "False")
     if [ "$cuda_check" = "True" ]; then
         log_success "✓ CUDA available"
     else
-        log_info "ℹ️  CUDA not available (normal in Codex, required for RunPod deployment)"
+        log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
     fi
 
     # Check required files
