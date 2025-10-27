@@ -226,7 +226,7 @@ validate_python_packages() {
 
     for pkg in "${packages[@]}"; do
         if python3 -c "import $pkg" 2>/dev/null; then
-            log_success "✓ $pkg"
+            log_success "$pkg"
         else
             log_warning "✗ $pkg not found"
             all_ok=false
@@ -417,7 +417,7 @@ validate_setup() {
     # Check Python syntax
     if [ -f "src/handler.py" ]; then
         if python3 -m py_compile src/handler.py 2>/dev/null; then
-            log_success "✓ Python syntax valid"
+            log_success "Python syntax valid"
         else
             log_warning "✗ Python syntax issues detected"
         fi
@@ -428,7 +428,7 @@ validate_setup() {
     # Check if handler can be imported
     if [ -f "src/handler.py" ]; then
         if python3 -c "from src.handler import handler" 2>/dev/null; then
-            log_success "✓ Handler importable"
+            log_success "Handler importable"
         else
             log_warning "✗ Handler import issues (may need proper environment)"
         fi
@@ -438,7 +438,7 @@ validate_setup() {
 
     # Check GPU availability
     if check_cuda_available; then
-        log_success "✓ CUDA available"
+        log_success "CUDA available"
     elif [ "$TORCH_INSTALLED" = "INSTALLED" ]; then
         log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
     else
@@ -450,7 +450,7 @@ validate_setup() {
     local all_files_ok=true
     for file in "${required_files[@]}"; do
         if [ -f "$file" ]; then
-            log_success "✓ $file"
+            log_success "$file"
         else
             log_warning "✗ $file missing in $(pwd)"
             all_files_ok=false
