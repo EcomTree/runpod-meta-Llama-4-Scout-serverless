@@ -426,6 +426,7 @@ validate_setup() {
         cd "$PROJECT_ROOT"
     else
         log_warning "PROJECT_ROOT not set or missing; validation may be incomplete"
+        return 1
     fi
 
     # Check Python syntax
