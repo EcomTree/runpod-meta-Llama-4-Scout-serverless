@@ -102,7 +102,7 @@ is_target_project() {
     local dir="${1:-.}"
     is_project_directory "$dir" && \
     [ -f "$dir/README.md" ] && \
-    grep -q "$PROJECT_IDENTITY_STRING" "$dir/README.md" 2>/dev/null
+    grep -qF "$PROJECT_IDENTITY_STRING" "$dir/README.md" 2>/dev/null
 }
 
 # Check CUDA availability with PyTorch installation detection
@@ -110,11 +110,12 @@ is_target_project() {
 # Sets global variable: TORCH_INSTALLED
 # Note: The Python script prints two explicit marker lines on stdout:
 #       'TORCH_INSTALLED=0|1' and 'CUDA_AVAILABLE=0|1'. We parse these markers
-#       from stdout (stderr is suppressed via 2>/dev/null) to remain robust even
-#       if other output appears before/after the markers.
+#       from stdout to remain robust even if other output appears before/after.
+#       Semantics: 0 = success/true (installed/available), 1 = false. This
+#       aligns with typical Unix exit-code semantics.
 check_cuda_available() {
     local cuda_check torch_status cuda_status
-    cuda_check=$(python3 - 2>/dev/null <<'EOF'
+    cuda_check=$(python3 - 2>&1 <<'EOF'
 try:
     import torch
     print("TORCH_INSTALLED=0")  # 0 = installed
@@ -126,6 +127,14 @@ EOF
     )
     torch_status=$(printf "%s\n" "$cuda_check" | awk -F= '/^TORCH_INSTALLED=/{print $2}' | tail -n 1 | tr -d '\r\n')
     cuda_status=$(printf "%s\n" "$cuda_check" | awk -F= '/^CUDA_AVAILABLE=/{print $2}' | tail -n 1 | tr -d '\r\n')
+
+    # If markers are missing, surface a brief sample for debugging and set safe defaults
+    if [[ -z "$torch_status" || -z "$cuda_status" ]]; then
+        log_warning "CUDA check produced unexpected output; showing last lines for debugging"
+        printf "%s\n" "$cuda_check" | tail -n 5 >&2 || true
+        torch_status="1"
+        cuda_status="1"
+    fi
     
     # Validate parsed values (must be 0 or 1), set safe defaults if unexpected output
     if [[ "$torch_status" != "0" && "$torch_status" != "1" ]]; then
