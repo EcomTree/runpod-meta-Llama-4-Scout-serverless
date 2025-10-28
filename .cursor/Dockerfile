@@ -42,16 +42,16 @@ RUN pip install --no-cache-dir --upgrade \
     wheel \
     build && \
     pip install --no-cache-dir \
-    pytest==7.4.3 \
-    pytest-cov==4.1.0 \
-    pytest-asyncio==0.21.1 \
-    black==23.12.1 \
-    flake8==6.1.0 \
-    mypy==1.7.1 \
-    isort==5.13.2 \
-    pylint==3.0.3 \
-    ipython==8.18.1 \
-    ipdb==0.13.13
+    pytest>=7.4.3,<8.0 \
+    pytest-cov>=4.1.0,<5.0 \
+    pytest-asyncio>=0.21.1,<1.0 \
+    black>=23.12.1,<24.0 \
+    flake8>=6.1.0,<7.0 \
+    mypy>=1.7.1,<2.0 \
+    isort>=5.13.2,<6.0 \
+    pylint>=3.0.3,<4.0 \
+    ipython>=8.18.1,<9.0 \
+    ipdb>=0.13.13,<1.0
 
 # Set working directory
 WORKDIR /workspace
