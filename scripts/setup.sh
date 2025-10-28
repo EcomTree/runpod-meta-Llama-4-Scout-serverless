@@ -240,7 +240,7 @@ validate_python_packages() {
 
     for pkg in "${packages[@]}"; do
         if python3 -c "import $pkg" 2>/dev/null; then
-            log_success "✓ $pkg"
+            log_success "$pkg"
         else
             log_warning "$pkg not found"
             all_ok=false
