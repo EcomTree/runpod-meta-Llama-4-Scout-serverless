@@ -108,23 +108,24 @@ is_target_project() {
 # Check CUDA availability with PyTorch installation detection
 # Returns: 0 if CUDA available, 1 if not available or PyTorch not installed
 # Sets global variable: TORCH_INSTALLED
-# Note: The Python script prints exactly 2 lines: torch installation status (0=installed, 1=not installed)
-#       and CUDA availability (0=available, 1=unavailable). We use 'tail -n 2' to filter any preceding
-#       warnings/stderr output, then extract each value with 'head -n 1' and 'tail -n 1'.
+# Note: The Python script prints two explicit marker lines on stdout:
+#       'TORCH_INSTALLED=0|1' and 'CUDA_AVAILABLE=0|1'. We parse these markers
+#       from stdout (stderr is suppressed via 2>/dev/null) to remain robust even
+#       if other output appears before/after the markers.
 check_cuda_available() {
     local cuda_check torch_status cuda_status
-    cuda_check=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
+    cuda_check=$(python3 - 2>/dev/null <<'EOF'
 try:
     import torch
-    print(0)  # 0 = installed
-    print(0 if torch.cuda.is_available() else 1)  # 0 = available, 1 = unavailable
+    print("TORCH_INSTALLED=0")  # 0 = installed
+    print(f"CUDA_AVAILABLE={0 if torch.cuda.is_available() else 1}")  # 0 = available, 1 = unavailable
 except ImportError:
-    print(1)  # 1 = not installed
-    print(1)  # 1 = unavailable
+    print("TORCH_INSTALLED=1")  # 1 = not installed
+    print("CUDA_AVAILABLE=1")  # 1 = unavailable
 EOF
     )
-    torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
-    cuda_status=$(echo "$cuda_check" | tail -n 1 | tr -d '\r\n')
+    torch_status=$(printf "%s\n" "$cuda_check" | awk -F= '/^TORCH_INSTALLED=/{print $2}' | tail -n 1 | tr -d '\r\n')
+    cuda_status=$(printf "%s\n" "$cuda_check" | awk -F= '/^CUDA_AVAILABLE=/{print $2}' | tail -n 1 | tr -d '\r\n')
     
     # Validate parsed values (must be 0 or 1), set safe defaults if unexpected output
     if [[ "$torch_status" != "0" && "$torch_status" != "1" ]]; then
@@ -241,7 +242,7 @@ validate_python_packages() {
         if python3 -c "import $pkg" 2>/dev/null; then
             log_success "✓ $pkg"
         else
-            log_warning "✗ $pkg not found"
+            log_warning "$pkg not found"
             all_ok=false
         fi
     done
@@ -287,7 +288,7 @@ setup_repository() {
         PROJECT_ROOT="$(pwd)"
         return 0
     elif is_project_directory; then
-        log_warning "Directory $(pwd) has similar project structure but failed identity verification. Checking workspace directory..."
+        log_warning "Directory $(pwd) has similar project structure but failed identity verification (e.g., missing expected README content or config). Checking the workspace directory..."
     fi
 
     # Check if project exists in workspace
@@ -432,10 +433,10 @@ validate_setup() {
         if python3 -m py_compile src/handler.py 2>/dev/null; then
             log_success "Python syntax valid"
         else
-            log_warning "✗ Python syntax issues detected"
+            log_warning "Python syntax issues detected"
         fi
     else
-        log_warning "✗ src/handler.py not found in $(pwd)"
+        log_warning "src/handler.py not found in $(pwd)"
     fi
 
     # Check if handler can be imported
@@ -443,10 +444,10 @@ validate_setup() {
         if python3 -c "from src.handler import handler" 2>/dev/null; then
             log_success "Handler importable"
         else
-            log_warning "✗ Handler import issues (may need proper environment)"
+            log_warning "Handler import issues (may need proper environment)"
         fi
     else
-        log_warning "✗ Cannot test handler import - src/handler.py not found"
+        log_warning "Cannot test handler import - src/handler.py not found"
     fi
 
     # Check GPU availability
@@ -455,7 +456,7 @@ validate_setup() {
     elif [ "$TORCH_INSTALLED" = "0" ]; then
         log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
     else
-        log_warning "✗ PyTorch not installed - cannot check CUDA availability"
+        log_warning "PyTorch not installed - cannot check CUDA availability"
     fi
 
     # Check required files
@@ -465,7 +466,7 @@ validate_setup() {
         if [ -f "$file" ]; then
             log_success "$file"
         else
-            log_warning "✗ $file missing in $(pwd)"
+            log_warning "$file missing in $(pwd)"
             all_files_ok=false
         fi
     done
