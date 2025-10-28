@@ -279,7 +279,7 @@ setup_repository() {
     fi
 
     # Check if project exists in workspace
-    if [ -d "$target_dir" ] && is_project_directory "$target_dir"; then
+    if [ -d "$target_dir" ] && is_target_project "$target_dir"; then
         log_info "Project directory already exists, skipping clone"
         cd "$target_dir"
         PROJECT_ROOT="$target_dir"

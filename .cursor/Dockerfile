@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nano=6.2.* \
     less=590.* \
     htop=3.0.* \
-    ncdu=1.15.* \
+    ncdu=1.16.* \
     tree=2.0.* \
     zip=3.0.* \
     unzip=6.0.* \
