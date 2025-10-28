@@ -11,6 +11,7 @@ set -euo pipefail
 SCRIPT_VERSION="1.0"
 PROJECT_NAME="runpod-meta-Llama-4-Scout-serverless"
 DEFAULT_REPO_URL="https://github.com/EcomTree/runpod-meta-Llama-4-Scout-serverless.git"
+PROJECT_IDENTITY_STRING="Llama-4-Scout-17B-16E-Instruct RunPod Serverless"
 
 # Color codes for output
 GREEN='\033[0;32m'
@@ -101,44 +102,45 @@ is_target_project() {
     local dir="${1:-.}"
     is_project_directory "$dir" && \
     [ -f "$dir/README.md" ] && \
-    grep -q "Llama-4-Scout-17B-16E-Instruct RunPod Serverless" "$dir/README.md" 2>/dev/null
+    grep -q "$PROJECT_IDENTITY_STRING" "$dir/README.md" 2>/dev/null
 }
 
 # Check CUDA availability with PyTorch installation detection
 # Returns: 0 if CUDA available, 1 if not available or PyTorch not installed
 # Sets global variable: TORCH_INSTALLED
-# Note: 'tail -n 2' retrieves the last 2 lines of the Python script output (torch status and CUDA availability),
-#       ensuring any preceding warnings/extra output are ignored.
+# Note: The Python script prints exactly 2 lines: torch installation status (0=installed, 1=not installed)
+#       and CUDA availability (0=available, 1=unavailable). We use 'tail -n 2' to filter any preceding
+#       warnings/stderr output, then extract each value with 'head -n 1' and 'tail -n 1'.
 check_cuda_available() {
     local cuda_check torch_status cuda_status
     cuda_check=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
 try:
     import torch
-    print('INSTALLED')
-    print(torch.cuda.is_available())
+    print(0)  # 0 = installed
+    print(0 if torch.cuda.is_available() else 1)  # 0 = available, 1 = unavailable
 except ImportError:
-    print('NOT_INSTALLED')
-    print(False)
+    print(1)  # 1 = not installed
+    print(1)  # 1 = unavailable
 EOF
     )
     torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
     cuda_status=$(echo "$cuda_check" | tail -n 1 | tr -d '\r\n')
     
-    # Validate parsed values, set safe defaults if unexpected output
-    if [[ "$torch_status" != "INSTALLED" && "$torch_status" != "NOT_INSTALLED" ]]; then
-        log_warning "Unexpected torch_status output: '$torch_status'. Setting to 'NOT_INSTALLED'."
-        torch_status="NOT_INSTALLED"
+    # Validate parsed values (must be 0 or 1), set safe defaults if unexpected output
+    if [[ "$torch_status" != "0" && "$torch_status" != "1" ]]; then
+        log_warning "Unexpected torch_status output: '$torch_status'. Setting to '1' (not installed)."
+        torch_status="1"
     fi
-    if [[ "$cuda_status" != "True" && "$cuda_status" != "False" ]]; then
-        log_warning "Unexpected cuda_status output: '$cuda_status'. Setting to 'False'."
-        cuda_status="False"
+    if [[ "$cuda_status" != "0" && "$cuda_status" != "1" ]]; then
+        log_warning "Unexpected cuda_status output: '$cuda_status'. Setting to '1' (unavailable)."
+        cuda_status="1"
     fi
     
-    # Export torch installation status for caller
+    # Export torch installation status for caller (0=installed, 1=not installed)
     TORCH_INSTALLED="$torch_status"
     
-    # Return 0 only if both installed and available
-    [ "$torch_status" = "INSTALLED" ] && [ "$cuda_status" = "True" ]
+    # Return 0 only if both installed (0) and available (0)
+    [ "$torch_status" = "0" ] && [ "$cuda_status" = "0" ]
 }
 
 # Python dependencies
@@ -285,7 +287,7 @@ setup_repository() {
         PROJECT_ROOT="$(pwd)"
         return 0
     elif is_project_directory; then
-        log_warning "Directory $(pwd) has required files but does not match expected project identity (missing or incorrect README content). Checking workspace directory..."
+        log_warning "Directory $(pwd) has similar project structure but failed identity verification (README missing '$PROJECT_IDENTITY_STRING'). Checking workspace directory..."
     fi
 
     # Check if project exists in workspace
@@ -450,7 +452,7 @@ validate_setup() {
     # Check GPU availability
     if check_cuda_available; then
         log_success "CUDA available"
-    elif [ "$TORCH_INSTALLED" = "INSTALLED" ]; then
+    elif [ "$TORCH_INSTALLED" = "0" ]; then
         log_info "CUDA not available (normal in Codex, required for RunPod deployment)"
     else
         log_warning "✗ PyTorch not installed - cannot check CUDA availability"
@@ -531,7 +533,7 @@ main() {
     if check_cuda_available; then
         echo "   ├─ CUDA: Available"
         python3 -c "import torch; print(f\"   └─ GPU: {torch.cuda.get_device_name(0)}\")" 2>/dev/null || echo "   └─ GPU: Unknown"
-    elif [ "$TORCH_INSTALLED" = "INSTALLED" ]; then
+    elif [ "$TORCH_INSTALLED" = "0" ]; then
         echo "   └─ CUDA: Not available (GPU required)"
     else
         echo "   └─ PyTorch: Not installed (cannot check CUDA)"

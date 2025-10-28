@@ -11,25 +11,26 @@ ENV PYTHONUNBUFFERED=1 \
     TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 
 # Install essential system dependencies and development tools
-# NOTE: Wildcard versioning (e.g., 1:2.34.* or 12.9.*) allows patch updates while pinning major.minor versions.
-#       This prevents build failures when Ubuntu publishes security updates that replace exact versions.
+# NOTE: Only critical packages (build-essential, git, ca-certificates) are version-pinned with wildcards
+#       to balance reproducibility and build stability. Utilities use latest available to avoid failures
+#       when Ubuntu removes older patch versions from repositories.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential=12.9.* \
     git=1:2.34.* \
-    curl=7.81.* \
-    wget=1.21.* \
     ca-certificates=20230311.* \
-    vim=2:8.2.* \
-    nano=6.2.* \
-    less=590.* \
-    htop=3.0.* \
-    ncdu=1.16.* \
-    tree=2.0.* \
-    zip=3.0.* \
-    unzip=6.0.* \
-    rsync=3.2.* \
-    openssh-client=1:8.9.* \
-    software-properties-common=0.99.* \
+    curl \
+    wget \
+    vim \
+    nano \
+    less \
+    htop \
+    ncdu \
+    tree \
+    zip \
+    unzip \
+    rsync \
+    openssh-client \
+    software-properties-common \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
