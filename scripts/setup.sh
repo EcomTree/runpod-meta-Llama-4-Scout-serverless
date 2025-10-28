@@ -287,7 +287,7 @@ setup_repository() {
         PROJECT_ROOT="$(pwd)"
         return 0
     elif is_project_directory; then
-        log_warning "Directory $(pwd) has similar project structure but failed identity verification (README missing '$PROJECT_IDENTITY_STRING'). Checking workspace directory..."
+        log_warning "Directory $(pwd) has similar project structure but failed identity verification. Checking workspace directory..."
     fi
 
     # Check if project exists in workspace
