@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED=1 \
     TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0+PTX"
 
 # Install essential system dependencies and development tools
-# NOTE: Wildcard versioning (e.g., 1:2.34.*) allows patch updates while pinning major.minor versions.
+# NOTE: Wildcard versioning (e.g., 1:2.34.* or 12.9.*) allows patch updates while pinning major.minor versions.
 #       This prevents build failures when Ubuntu publishes security updates that replace exact versions.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential=12.9.* \
