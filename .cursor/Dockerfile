@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git=1:2.34.* \
     curl=7.81.* \
     wget=1.21.* \
-    ca-certificates \
+    ca-certificates=20211016* \
     vim=2:8.2.* \
     nano=6.2.* \
     less=590.* \
@@ -58,10 +58,8 @@ WORKDIR /workspace
 # NOTE: Build context must be project root, not .cursor/ directory
 #       Example: docker build -f .cursor/Dockerfile -t my-image .
 COPY requirements.txt /workspace/requirements.txt
-RUN pip install --no-cache-dir -r /workspace/requirements.txt
-
-# Create common cache directories in a location accessible to all users
-RUN mkdir -p /workspace/.cache/huggingface && \
+RUN pip install --no-cache-dir -r /workspace/requirements.txt && \
+    mkdir -p /workspace/.cache/huggingface && \
     mkdir -p /workspace/.cache/torch && \
     mkdir -p /workspace/.cache/pip
 
