@@ -107,8 +107,8 @@ is_target_project() {
 # Check CUDA availability with PyTorch installation detection
 # Returns: 0 if CUDA available, 1 if not available or PyTorch not installed
 # Sets global variable: TORCH_INSTALLED
-# Note: 'tail -n 2' retrieves the last 2 lines of Python output (torch status and CUDA availability),
-#       ensuring any preceding warnings/extra output are ignored
+# Note: 'tail -n 2' retrieves the last 2 lines of the Python script output (torch status and CUDA availability),
+#       ensuring any preceding warnings/extra output are ignored.
 check_cuda_available() {
     local cuda_check torch_status cuda_status
     cuda_check=$(python3 - 2>/dev/null <<'EOF' | tail -n 2
@@ -123,6 +123,16 @@ EOF
     )
     torch_status=$(echo "$cuda_check" | head -n 1 | tr -d '\r\n')
     cuda_status=$(echo "$cuda_check" | tail -n 1 | tr -d '\r\n')
+    
+    # Validate parsed values, set safe defaults if unexpected output
+    if [[ "$torch_status" != "INSTALLED" && "$torch_status" != "NOT_INSTALLED" ]]; then
+        log_warning "Unexpected torch_status output: '$torch_status'. Setting to 'NOT_INSTALLED'."
+        torch_status="NOT_INSTALLED"
+    fi
+    if [[ "$cuda_status" != "True" && "$cuda_status" != "False" ]]; then
+        log_warning "Unexpected cuda_status output: '$cuda_status'. Setting to 'False'."
+        cuda_status="False"
+    fi
     
     # Export torch installation status for caller
     TORCH_INSTALLED="$torch_status"
@@ -227,7 +237,7 @@ validate_python_packages() {
 
     for pkg in "${packages[@]}"; do
         if python3 -c "import $pkg" 2>/dev/null; then
-            log_success "$pkg"
+            log_success "✓ $pkg"
         else
             log_warning "✗ $pkg not found"
             all_ok=false
@@ -275,7 +285,7 @@ setup_repository() {
         PROJECT_ROOT="$(pwd)"
         return 0
     elif is_project_directory; then
-        log_warning "Found similar structure but not the target project in $(pwd). Checking workspace directory..."
+        log_warning "Directory $(pwd) has required files but does not match expected project identity (missing or incorrect README content). Checking workspace directory..."
     fi
 
     # Check if project exists in workspace
