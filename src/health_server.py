@@ -225,6 +225,7 @@ def start_health_server():
     # This prevents "ValueError: signal only works in main thread" error
     # Note: Tested with uvicorn>=0.25.0 - if this fails in future versions,
     # check uvicorn changelog for changes to signal handler API
+    # Force HTTP/1.1 to avoid HTTP/2 framing layer issues
     config = uvicorn.Config(
         app,
         host=server_config.host,
@@ -232,6 +233,7 @@ def start_health_server():
         log_level=log_level_str,
         access_log=False,  # Reduce noise
         loop="asyncio",
+        http="h11",  # Force HTTP/1.1 only (h11 is the HTTP/1.1 implementation)
     )
     server = uvicorn.Server(config)
     

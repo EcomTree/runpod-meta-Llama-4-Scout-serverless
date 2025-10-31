@@ -3,9 +3,25 @@ Startup script that runs both the health check server and RunPod handler.
 """
 
 import sys
+import os
 import threading
 from src.utils import logger
 from src.config import validate_config, get_config_summary
+
+# Force HTTP/1.1 for all HTTP clients to avoid HTTP/2 framing issues
+# This affects urllib3 (used by requests library, which may be used by runpod SDK)
+os.environ["URLLIB3_DISABLE_HTTP2"] = "1"
+
+# Configure urllib3 to disable HTTP/2 if available
+try:
+    import urllib3
+    # Disable HTTP/2 support in urllib3 (for versions that support it)
+    if hasattr(urllib3.util, "connection"):
+        if hasattr(urllib3.util.connection, "HAS_HTTP2"):
+            urllib3.util.connection.HAS_HTTP2 = False
+except (ImportError, AttributeError):
+    # urllib3 not available or doesn't support this configuration
+    pass
 
 
 def start_health_server_thread():
