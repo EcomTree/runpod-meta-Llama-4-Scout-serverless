@@ -10,7 +10,7 @@ from src.config import validate_config, get_config_summary
 
 # Force HTTP/1.1 for all HTTP clients to avoid HTTP/2 framing issues
 # This affects urllib3 (used by requests library, which may be used by runpod SDK)
-os.environ["URLLIB3_DISABLE_HTTP2"] = "1"
+# The URLLIB3_DISABLE_HTTP2 environment variable should be set in the Dockerfile (see Dockerfile line 73).
 
 # Configure urllib3 to disable HTTP/2 if available
 try:
