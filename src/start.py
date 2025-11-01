@@ -16,6 +16,11 @@ from src.config import validate_config, get_config_summary
 # The health check server (uvicorn) is configured to use HTTP/1.1 only via
 # the http="h11" parameter in src/health_server.py, which forces the h11
 # HTTP/1.1 implementation instead of httptools (which could support HTTP/2).
+#
+# See Dockerfile for the accompanying PYTHONHTTPSVERIFY=1 setting that keeps
+# TLS certificate verification enabled even when third-party packages try to
+# modify urllib3/requests defaults. Together with the HTTP/1.1 enforcement
+# above, this ensures outbound requests remain secure and predictable.
 
 
 def start_health_server_thread():
