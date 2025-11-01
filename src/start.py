@@ -30,6 +30,7 @@ try:
         try:
             urllib3.future.util.connection.HAS_HTTP2 = False
         except AttributeError:
+            # The attribute does not exist; nothing to disable. Safe to ignore.
             pass
 except ImportError:
     # urllib3 not available or doesn't support this configuration
