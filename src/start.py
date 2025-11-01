@@ -8,20 +8,15 @@ import threading
 from src.utils import logger
 from src.config import validate_config, get_config_summary
 
-# Force HTTP/1.1 for all HTTP clients to avoid HTTP/2 framing issues
-# This affects urllib3 (used by requests library, which may be used by runpod SDK)
-# The URLLIB3_DISABLE_HTTP2 environment variable should be set in the Dockerfile (see Dockerfile line 73).
-
-# Configure urllib3 to disable HTTP/2 if available
-try:
-    import urllib3
-    # Disable HTTP/2 support in urllib3 (for versions that support it)
-    if hasattr(urllib3.util, "connection"):
-        if hasattr(urllib3.util.connection, "HAS_HTTP2"):
-            urllib3.util.connection.HAS_HTTP2 = False
-except (ImportError, AttributeError):
-    # urllib3 not available or doesn't support this configuration
-    pass
+# Note on HTTP/1.1 enforcement:
+# Standard urllib3 (v1.x and v2.x) does not support HTTP/2 - it only uses HTTP/1.1.
+# HTTP/2 support only exists in the experimental urllib3.future package.
+# Since this project uses standard urllib3 (via requests/runpod dependencies),
+# no HTTP/2 configuration is needed for urllib3.
+#
+# The health check server (uvicorn) is configured to use HTTP/1.1 only via
+# the http="h11" parameter in src/health_server.py, which forces the h11
+# HTTP/1.1 implementation instead of httptools (which could support HTTP/2).
 
 
 def start_health_server_thread():
