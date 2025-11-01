@@ -22,10 +22,8 @@ from src.config import validate_config, get_config_summary
 # modify urllib3/requests defaults. Together with the HTTP/1.1 enforcement
 # below, this ensures outbound requests remain secure and predictable.
 #
-# Additionally, we configure urllib3 to disable HTTP/2 if available (for future-proofing
-# in case experimental urllib3.future is ever used):
-# For future-proofing: If the experimental urllib3.future package is ever used,
-# disable HTTP/2 support if the attribute exists.
+# Additionally, for future-proofing: if the experimental urllib3.future package is ever used,
+# we disable HTTP/2 support if the relevant attribute exists.
 try:
     import urllib3
     if hasattr(urllib3, "future"):
