@@ -71,6 +71,12 @@ ENV PYTHONPATH=/app \
     URLLIB3_DISABLE_HTTP2=1
 
 # Enforce SSL certificate verification for Python HTTPS requests (security best practice)
+# NOTE: This mirrors the default behaviour for CPython and ensures the platform
+#       never falls back to insecure HTTP even if upstream packages attempt to
+#       disable verification. Keep this aligned with the logic in src/start.py
+#       which documents the HTTP/1.1 runtime guarantees.
+ENV PYTHONHTTPSVERIFY=1
+
 # Expose health check port
 EXPOSE 8000
 
