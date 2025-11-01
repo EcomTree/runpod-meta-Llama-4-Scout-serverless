@@ -24,17 +24,17 @@ from src.config import validate_config, get_config_summary
 #
 # Additionally, we configure urllib3 to disable HTTP/2 if available (for future-proofing
 # in case experimental urllib3.future is ever used):
+# For future-proofing: If the experimental urllib3.future package is ever used,
+# disable HTTP/2 support if the attribute exists.
 try:
     import urllib3
-    # Disable HTTP/2 support in urllib3 (for versions that support it)
-    try:
-        urllib3.util.connection.HAS_HTTP2 = False
-    except AttributeError:
-        pass
+    if hasattr(urllib3, "future"):
+        try:
+            urllib3.future.util.connection.HAS_HTTP2 = False
+        except AttributeError:
+            pass
 except ImportError:
     # urllib3 not available or doesn't support this configuration
-
-
 def start_health_server_thread():
     """Start health check server in a separate thread."""
     try:
