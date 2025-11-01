@@ -67,8 +67,7 @@ ENV PYTHONPATH=/app \
     LOG_LEVEL=INFO \
     LOG_FORMAT=json \
     CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    URLLIB3_DISABLE_HTTP2=1
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
 # Enforce SSL certificate verification for Python HTTPS requests (security best practice)
 # NOTE: This mirrors the default behaviour for CPython and ensures the platform
