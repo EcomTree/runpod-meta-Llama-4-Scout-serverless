@@ -153,7 +153,7 @@ class ModelLoader:
                 
                 # Add dtype if not using quantization
                 if quantization_config is None:
-                    model_kwargs["dtype"] = torch_dtype
+                    model_kwargs["torch_dtype"] = torch_dtype
                 else:
                     model_kwargs["quantization_config"] = quantization_config
                 
