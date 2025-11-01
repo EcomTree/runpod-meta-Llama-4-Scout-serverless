@@ -27,12 +27,12 @@ from src.config import validate_config, get_config_summary
 try:
     import urllib3
     # Disable HTTP/2 support in urllib3 (for versions that support it)
-    if hasattr(urllib3.util, "connection"):
-        if hasattr(urllib3.util.connection, "HAS_HTTP2"):
-            urllib3.util.connection.HAS_HTTP2 = False
-except (ImportError, AttributeError):
+    try:
+        urllib3.util.connection.HAS_HTTP2 = False
+    except AttributeError:
+        pass
+except ImportError:
     # urllib3 not available or doesn't support this configuration
-    pass
 
 
 def start_health_server_thread():
