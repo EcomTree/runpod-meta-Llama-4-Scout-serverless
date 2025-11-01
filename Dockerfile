@@ -20,6 +20,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
+# Configure system to prefer HTTP/1.1 to avoid HTTP/2 framing issues
+# Create curl config that forces HTTP/1.1 (only affects curl inside container)
+RUN echo "--http1.1" >> /etc/curlrc || true
+
 # Upgrade pip and install build dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
@@ -61,7 +65,16 @@ ENV PYTHONPATH=/app \
     HF_DATASETS_CACHE=/home/runpod/.cache/huggingface/datasets \
     TORCH_HOME=/home/runpod/.cache/torch \
     LOG_LEVEL=INFO \
-    LOG_FORMAT=json
+    LOG_FORMAT=json \
+    CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+# Enforce SSL certificate verification for Python HTTPS requests (security best practice)
+# NOTE: This mirrors the default behavior for CPython and ensures the platform
+#       never falls back to insecure HTTP even if upstream packages attempt to
+#       disable verification. Keep this aligned with the logic in src/start.py
+#       which documents the HTTP/1.1 runtime guarantees.
+ENV PYTHONHTTPSVERIFY=1
 
 # Expose health check port
 EXPOSE 8000

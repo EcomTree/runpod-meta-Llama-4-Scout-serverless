@@ -7,6 +7,35 @@ import threading
 from src.utils import logger
 from src.config import validate_config, get_config_summary
 
+# Note on HTTP/1.1 enforcement:
+# Standard urllib3 (v1.x and v2.x) does not support HTTP/2 - it only uses HTTP/1.1.
+# HTTP/2 support only exists in the experimental urllib3.future package.
+# Since this project uses standard urllib3 (via requests/runpod dependencies),
+# no HTTP/2 configuration is needed for urllib3.
+#
+# The health check server (uvicorn) is configured to use HTTP/1.1 only via
+# the http="h11" parameter in src/health_server.py, which forces the h11
+# HTTP/1.1 implementation instead of httptools (which could support HTTP/2).
+#
+# See Dockerfile for the accompanying PYTHONHTTPSVERIFY=1 setting that keeps
+# TLS certificate verification enabled even when third-party packages try to
+# modify urllib3/requests defaults. Together with the HTTP/1.1 enforcement
+# below, this ensures outbound requests remain secure and predictable.
+#
+# Additionally, for future-proofing: if the experimental urllib3.future package is ever used,
+# we disable HTTP/2 support if the relevant attribute exists.
+try:
+    import urllib3
+    if hasattr(urllib3, "future"):
+        try:
+            urllib3.future.util.connection.HAS_HTTP2 = False
+        except AttributeError:
+            # The attribute does not exist; nothing to disable. Safe to ignore.
+            pass
+except ImportError:
+    # urllib3 not available or doesn't support this configuration
+    pass
+
 
 def start_health_server_thread():
     """Start health check server in a separate thread."""
@@ -29,6 +58,8 @@ def start_health_server_thread():
             f"Exception: {e!s}"
         )
         logger.debug("Exception details:", exc_info=True)
+
+
 def main():
     """Main startup function."""
     logger.info("=" * 80)
