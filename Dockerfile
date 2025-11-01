@@ -22,8 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Configure system to prefer HTTP/1.1 to avoid HTTP/2 framing issues
 # Create curl config that forces HTTP/1.1 (only affects curl inside container)
-RUN mkdir -p /etc/ssl/certs && \
-    echo "--http1.1" >> /etc/curlrc || true
+RUN echo "--http1.1" >> /etc/curlrc || true
 
 # Upgrade pip and install build dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
