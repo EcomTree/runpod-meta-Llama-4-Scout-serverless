@@ -3,7 +3,6 @@ Startup script that runs both the health check server and RunPod handler.
 """
 
 import sys
-import os
 import threading
 from src.utils import logger
 from src.config import validate_config, get_config_summary
