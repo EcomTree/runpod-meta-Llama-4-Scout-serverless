@@ -34,6 +34,9 @@ try:
             pass
 except ImportError:
     # urllib3 not available or doesn't support this configuration
+    pass
+
+
 def start_health_server_thread():
     """Start health check server in a separate thread."""
     try:
