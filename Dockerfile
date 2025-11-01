@@ -67,8 +67,11 @@ ENV PYTHONPATH=/app \
     LOG_LEVEL=INFO \
     LOG_FORMAT=json \
     CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    PYTHONHTTPSVERIFY=1
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+# Enforce SSL certificate verification for Python HTTPS requests (security best practice)
+ENV PYTHONHTTPSVERIFY=1
+
 # Expose health check port
 EXPOSE 8000
 
