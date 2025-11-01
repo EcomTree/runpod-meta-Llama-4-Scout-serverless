@@ -3,7 +3,6 @@ Startup script that runs both the health check server and RunPod handler.
 """
 
 import sys
-import os
 import threading
 from src.utils import logger
 from src.config import validate_config, get_config_summary
@@ -40,6 +39,8 @@ def start_health_server_thread():
             f"Exception: {e!s}"
         )
         logger.debug("Exception details:", exc_info=True)
+
+
 def main():
     """Main startup function."""
     logger.info("=" * 80)
