@@ -2,10 +2,15 @@
 Startup script that runs both the health check server and RunPod handler.
 """
 
+import os
 import sys
 import threading
 from src.utils import logger
 from src.config import validate_config, get_config_summary
+
+# Set TOKENIZERS_PARALLELISM to avoid fork warnings
+# This prevents the "The current process just got forked" warning
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 # Note on HTTP/1.1 enforcement:
 # Standard urllib3 (v1.x and v2.x) does not support HTTP/2 - it only uses HTTP/1.1.
